@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="assets/css/pico.min.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
   <title>Main</title>
   <script src="assets/main.js"></script>
 </head>
@@ -14,6 +15,27 @@
   var app = Elm.Main.init({
     node: document.getElementById('myapp')
   });
+
+  app.ports.store.subscribe(function(data) {
+    let lessonName = data[0];
+    let editorPos = data[1];
+    localStorage.setItem(`file---${lessonName}---${editorPos}`, data[2]);
+  });
+
+  app.ports.restore.subscribe(function(data) {
+    let lessonName = data[0];
+    let editorCount = data[1];
+    let content = [];
+    for (let editorPos = 0; editorPos < editorCount;  editorPos++) {
+      let storedValue = localStorage.getItem(`file---${lessonName}---${editorPos}`);
+      if (!storedValue) {
+        storedValue = "NOT YET STORED";
+      }
+      content.push(storedValue);
+    }
+    app.ports.restored.send(content);
+  });
+
   </script>
 </body>
 </html>
