@@ -1,5 +1,11 @@
 module Lesson exposing (..)
 
+type alias LessonDescription =
+  { id: LessonId
+  , lesson : Lesson
+  , title : String
+  , body : String
+  }
 
 type FileType
     = HtmlFile
@@ -27,24 +33,4 @@ lessonIdStr id =
   case id of
       HtmlIntroId -> "HtmlIntro"
       CSSIntroId -> "CSSIntro"
-
-lessonId : Lesson -> LessonId
-lessonId lesson =
-    case lesson of
-        HtmlIntro _ ->
-            HtmlIntroId
-        CSSIntro _ ->
-            CSSIntroId
-
-
-lessonTitle : Lesson -> String
-lessonTitle lesson =
-    case lesson of
-        HtmlIntro _ ->
-            "Hello HTML"
-        CSSIntro _ ->
-            "Hello CSS"
-
-
-
 

@@ -1,4 +1,5 @@
 port module Main exposing (main)
+import Lesson exposing (Lesson(..))
 
 import Browser
 import Browser.Dom exposing (getViewport)
@@ -7,11 +8,12 @@ import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, button, div, iframe, input, label, li, text, textarea, ul)
 import Html.Attributes exposing (checked, class, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Lesson exposing (FileType(..), Lesson(..), LessonFile, LessonId(..), lessonId, lessonIdStr, lessonTitle)
+import Lesson exposing (FileType(..), Lesson(..), LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
 import Lessons.HtmlIntro as HtmlIntro
 import String exposing (fromInt)
 import Task
+import Lesson exposing (LessonDescription)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -28,13 +30,14 @@ port run : List ( String, String ) -> Cmd msg
 
 port readyForPreview : (String -> msg) -> Sub msg
 
+lessonDescriptions : List LessonDescription
+lessonDescriptions =
+  [ HtmlIntro.lessonDescription
+  , CSSIntro.lessonDescription
+  ]
 
-lessons : List Lesson
-lessons =
-    [ HtmlIntro.lesson
-    , CSSIntro.lesson
-    ]
-
+--lessons : List Lesson
+--lessons = List.map .lesson lessonDescriptions
 
 main : Program () Model Msg
 main =
@@ -53,7 +56,7 @@ type PreviewState
 
 
 type alias Model =
-    { currentLesson : Maybe Lesson
+    { currentLesson : Maybe { lesson: Lesson, description: LessonDescription }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -136,26 +139,26 @@ update msg model =
 
         ( GotoLesson id, _ ) ->
             let
-                currentLesson =
+                description =
                     case id of
                         HtmlIntroId ->
-                            HtmlIntro.lesson
+                            HtmlIntro.lessonDescription
 
                         CSSIntroId ->
-                            CSSIntro.lesson
+                            CSSIntro.lessonDescription
             in
-            ( { model | currentLesson = Just currentLesson, previewState = NoPreview }
-            , restore ( lessonIdStr <| lessonId currentLesson, List.length <| lessonEditors currentLesson )
+            ( { model | currentLesson = Just {lesson= description.lesson, description = description}, previewState = NoPreview }
+            , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lesson )
             )
 
-        ( RunCurrentLesson, Just lesson ) ->
+        ( RunCurrentLesson, Just {lesson} ) ->
             ( { model | previewState = Loading }
             , run <| filesForRunning lesson
             )
 
-        ( ChangeEditor pos value, Just lesson ) ->
-            ( { model | currentLesson = Just <| updateEditor lesson pos value }
-            , store ( (lessonIdStr << lessonId) lesson, String.fromInt pos, value )
+        ( ChangeEditor pos value, Just current ) ->
+            ( { model | currentLesson = Just { current | lesson = updateEditor current.lesson pos value } }
+            , store ( lessonIdStr current.description.id, String.fromInt pos, value )
             )
 
         ( ShowPreview hash, _ ) ->
@@ -163,7 +166,7 @@ update msg model =
             , Cmd.none
             )
 
-        ( GotRestoredContent contents, Just lesson ) ->
+        ( GotRestoredContent contents, Just current ) ->
             let
                 indexedContents =
                     List.indexedMap (\i c -> ( i, c )) contents
@@ -172,9 +175,9 @@ update msg model =
                     updateEditor l pos value
 
                 restoredEditors =
-                    List.foldr f lesson indexedContents
+                    List.foldr f current.lesson indexedContents
             in
-            ( { model | currentLesson = Just <| restoredEditors }
+            ( { model | currentLesson = Just <| { current | lesson = restoredEditors} }
             , Cmd.none
             )
 
@@ -239,10 +242,10 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ ul [] <| List.map lessonItemView lessons
+        [ ul [] <| List.map lessonItemView lessonDescriptions
         , case model.currentLesson of
-            Just lesson ->
-                lessonView model.editorsHeight model.lessonWidth lesson model.previewState
+            Just {lesson, description} ->
+                lessonView model.editorsHeight model.lessonWidth lesson description model.previewState
 
             Nothing ->
                 text ""
@@ -254,11 +257,11 @@ px x =
     fromInt x ++ "px"
 
 
-lessonView : Int -> Int -> Lesson -> PreviewState -> Html Msg
-lessonView editorsHeight lessonWidth lesson previewState =
+lessonView : Int -> Int -> Lesson -> LessonDescription -> PreviewState -> Html Msg
+lessonView editorsHeight lessonWidth lesson description previewState =
     div [ class "lessonContainer" ]
         [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
-        , div [ class "left", style "width" (px lessonWidth) ] [ text (lessonTitle lesson) ]
+        , div [ class "left", style "width" (px lessonWidth) ] [ text description.title ]
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
             , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors lesson ]
@@ -311,6 +314,6 @@ fileView pos { filename, content } =
     ]
 
 
-lessonItemView : Lesson -> Html Msg
-lessonItemView lesson =
-    li [ onClick <| GotoLesson <| lessonId lesson ] [ text <| lessonTitle lesson ]
+lessonItemView : LessonDescription -> Html Msg
+lessonItemView ld =
+    li [ onClick <| GotoLesson ld.id ] [ text ld.title ]

@@ -1,7 +1,23 @@
-module Lessons.CSSIntro exposing (lesson)
-import Lesson exposing (Lesson)
-import Lesson exposing (Lesson(..))
-import Lesson exposing (FileType(..))
+module Lessons.CSSIntro exposing (lesson, lessonDescription)
+
+import Lesson exposing (FileType(..), Lesson(..), LessonId(..))
+import Lessons.HtmlIntro exposing (lesson)
+
+
+lessonDescription =
+    { id = CSSIntroId
+    , title = "Hello CSS"
+    , body = body
+    , lesson = lesson
+    }
+
+
+body =
+    """**some** markdown
+
+  - oh
+  - yeah
+  """
 
 
 lesson : Lesson
@@ -32,10 +48,9 @@ htmlIntroIndexHtml =
   </body>
 </html>"""
 
+
 stylesCSS =
-  """
+    """
 h1 { color: red; }
 p { background-color: yellow; }
 """
-
-
