@@ -2,9 +2,40 @@
   font-family: monospace;
 }
 
+nav {
+  border-bottom: 1px solid var(--dropdown-border-color);
+}
+
+nav .outline {
+  position: absolute;
+  top: 3.5em;
+  padding: 1em;
+  transform: translate(-100%, 0);
+  background-color: var(--card-background-color);
+  transition: transform 0.5s ease-out;
+  z-index: 10;
+}
+
+nav .outline.visible {
+  transform: translate(0, 0);
+}
+
+nav .outline ul, nav .outline p, nav .outline  li {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  cursor: pointer;
+}
+nav .outline  li {
+  padding-left: 1em;
+  font-size: 0.8em;
+}
+
 .lessonContainer {
   position: absolute;
-  top: 3em;
+  top: 3.5em;
   bottom: 0;
   left: 0;
   right: 0;

@@ -4,13 +4,13 @@ import Browser
 import Browser.Dom exposing (getViewport)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
-import Html exposing (Html, button, div, iframe, input, label, li, text, textarea, ul)
-import Html.Attributes exposing (checked, class, for, id, name, src, style, tabindex, type_, value)
+import Html exposing (Html, a, button, div, iframe, input, label, li, nav, p, span, text, textarea, ul)
+import Html.Attributes exposing (checked, class, classList, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
-import Lessons.HtmlIntro as HtmlIntro
 import Lessons.ElmIntro as ElmIntro
+import Lessons.HtmlIntro as HtmlIntro
 import String exposing (fromInt)
 import Task
 
@@ -38,9 +38,17 @@ lessonDescriptions =
     ]
 
 
+type Outline
+    = Chapter String (List Outline)
+    | Lesson LessonDescription
 
---lessons : List Lesson
---lessons = List.map .lesson lessonDescriptions
+
+outline : List Outline
+outline =
+    [ Chapter "Html" [ Lesson HtmlIntro.lessonDescription ]
+    , Chapter "CSS" [ Lesson CSSIntro.lessonDescription ]
+    , Chapter "Elm" [ Lesson ElmIntro.lessonDescription ]
+    ]
 
 
 main : Program () Model Msg
@@ -66,6 +74,7 @@ type alias Model =
     , editorsHeight : Int
     , drag : Draggable.State DraggableId
     , beingDragged : Maybe DraggableId
+    , showOutline : Bool
     }
 
 
@@ -82,6 +91,7 @@ init _ =
       , editorsHeight = 100
       , drag = Draggable.init
       , beingDragged = Nothing
+      , showOutline = False
       }
     , Task.perform GotViewPort getViewport
     )
@@ -97,6 +107,7 @@ type Msg
     | OnDragBy Draggable.Delta
     | StartDragging DraggableId
     | DragMsg (Draggable.Msg DraggableId)
+    | ToggleOutline
 
 
 dragConfig : Draggable.Config DraggableId Msg
@@ -137,6 +148,11 @@ update msg model =
             , Cmd.none
             )
 
+        ( ToggleOutline, _ ) ->
+            ( { model | showOutline = not model.showOutline }
+            , Cmd.none
+            )
+
         ( DragMsg dragMsg, _ ) ->
             Draggable.update dragConfig dragMsg model
 
@@ -153,7 +169,11 @@ update msg model =
                 description =
                     lessonDescriptionById id
             in
-            ( { model | currentLesson = Just { lesson = description.lessonFiles, description = description }, previewState = NoPreview }
+            ( { model
+                | currentLesson = Just { lesson = description.lessonFiles, description = description }
+                , previewState = NoPreview
+                , showOutline = False
+              }
             , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lessonFiles )
             )
 
@@ -232,7 +252,15 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ ul [] <| List.map lessonItemView lessonDescriptions
+        [ nav []
+            [ ul []
+                [ li []
+                    [ span [ onClick ToggleOutline ] [ text "Lessons" ]
+                    , div [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
+                        List.map outlineView outline
+                    ]
+                ]
+            ]
         , case model.currentLesson of
             Just { lesson, description } ->
                 lessonView model.editorsHeight model.lessonWidth lesson description model.previewState
@@ -301,3 +329,13 @@ fileView pos { filename, content } =
 lessonItemView : LessonDescription -> Html Msg
 lessonItemView ld =
     li [ onClick <| GotoLesson ld.id ] [ text ld.title ]
+
+
+outlineView : Outline -> Html Msg
+outlineView ol =
+    case ol of
+        Chapter name subChapters ->
+            div [] [ a [] [ text name ], ul [] <| List.map outlineView subChapters ]
+
+        Lesson { title, id } ->
+            li [ onClick <| GotoLesson id ] [ a [] [ text title ] ]
