@@ -24,6 +24,7 @@ htmlIntroIndexHtml =
     """<!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <h1>I am a red heading</h1>
