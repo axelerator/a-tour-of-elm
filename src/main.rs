@@ -1,15 +1,20 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    process::{Command, Stdio}, time::Duration,
+    process::{Command, Stdio},
+    time::Duration,
 };
 
-use axum::{http::StatusCode, routing::get, Router};
+use axum::{
+    extract,
+    http::StatusCode,
+    routing::{get, post},
+    Router,
+};
 use mime;
 use serde::Deserialize;
 use serde_json;
 use tokio::{self, time};
-use tower_cookies::{CookieManagerLayer, Cookies};
 use tower_http::services::{ServeDir, ServeFile};
 use walkdir::WalkDir;
 
@@ -22,8 +27,8 @@ async fn main() {
         .nest_service("/", ServeFile::new("www/index.html"))
         .nest_service("/assets", serve_dir);
     app = app
-        .route("/run/:rest", get(handler))
-        .layer(CookieManagerLayer::new());
+        .route("/compile/:run", post(compile_handler))
+        .route("/run/:run_hash/:rest", get(handler));
     tokio::spawn(async {
         let minutes_10 = 10 * 60 * 1000;
         let mut interval = time::interval(Duration::from_millis(minutes_10));
@@ -52,62 +57,12 @@ struct LessonFile {
 }
 
 const CONTENT_TYPE: &str = "Content-Type";
-const RUN_COOKIE_NAME: &str = "run";
-const COOKIE_NAME: &str = "lessonFiles";
 
 async fn handler(
-    axum::extract::Path(path): axum::extract::Path<String>,
-    cookies: Cookies,
+    axum::extract::Path((run_hash, path)): axum::extract::Path<(String, String)>,
 ) -> (StatusCode, [(&'static str, String); 1], String) {
-    let run_hash: String = cookies
-        .get(RUN_COOKIE_NAME)
-        .map(|c| c.value().to_string())
-        .unwrap();
-    let lesson_files: LessonFiles = cookies
-        .get(COOKIE_NAME)
-        .map(|c| serde_json::from_str(&c.value()).unwrap())
-        .unwrap();
-
     let tmp = PathBuf::from("tmp");
-    let elm_boiler_plate = "elm_boiler_plate";
-    let elm_boiler_plate_dir = tmp.join(elm_boiler_plate);
-    let run_dir = tmp.join(run_hash);
-    if !run_dir.exists() {
-        fs::create_dir_all(&run_dir).unwrap();
-
-        let mut compile_elm = true;
-        for file in lesson_files.files.iter() {
-            if file.filename == "Main.elm" {
-                compile_elm = true;
-            }
-            let path = run_dir.join(&file.filename);
-            fs::write(path, file.content.clone()).unwrap();
-        }
-
-        if compile_elm {
-            create_boiler_plate(&elm_boiler_plate_dir);
-
-            let _copy_boilerplate = Command::new("cp")
-                .arg("-r")
-                .arg(&elm_boiler_plate_dir)
-                .arg(run_dir.join("elm"))
-                .spawn()
-                .expect("Failed to copy copy_boilerplate")
-                .wait();
-
-            copy_files_with_extension(&run_dir, &run_dir.join("elm").join("src"), "elm").unwrap();
-
-            let _make = Command::new("elm")
-                .current_dir(&run_dir.join("elm"))
-                .arg("make")
-                .arg("src/Main.elm")
-                .arg("--output=../main.js")
-                .spawn()
-                .expect("Failed to compile")
-                .wait();
-        }
-    }
-    let file = run_dir.join(path);
+    let file = tmp.join(run_hash).join(path);
 
     if file.exists() {
         let content_type: mime::Mime = if let Some(extension) = file.extension() {
@@ -133,6 +88,56 @@ async fn handler(
         )
     }
 }
+
+async fn compile_handler(
+    axum::extract::Path(run_hash): axum::extract::Path<String>,
+    extract::Json(lesson_files): extract::Json<LessonFiles>,
+) {
+    let tmp = PathBuf::from("tmp");
+    let elm_boiler_plate = "elm_boiler_plate";
+    let elm_boiler_plate_dir = tmp.join(elm_boiler_plate);
+    let run_dir = tmp.join(run_hash);
+    if !run_dir.exists() {
+        fs::create_dir_all(&run_dir).unwrap();
+
+        let mut compile_elm = false;
+        for file in lesson_files.files.iter() {
+            if file.filename == "Main.elm" {
+                compile_elm = true;
+            }
+            let path = run_dir.join(&file.filename);
+            fs::write(path, file.content.clone()).unwrap();
+        }
+
+        if compile_elm {
+            create_boiler_plate(&elm_boiler_plate_dir);
+
+            let _copy_boilerplate = Command::new("cp")
+                .arg("-r")
+                .arg(&elm_boiler_plate_dir)
+                .arg(run_dir.join("elm"))
+                .spawn()
+                .expect("Failed to copy copy_boilerplate")
+                .wait();
+
+            copy_files_with_extension(&run_dir, &run_dir.join("elm").join("src"), "elm").unwrap();
+
+            let make_out = Command::new("elm")
+                .current_dir(&run_dir.join("elm"))
+                .arg("make")
+                .arg("src/Main.elm")
+                .arg("--output=../main.js")
+                .output()
+                .expect("Failed to compile");
+            println!("status: {}", make_out.status);
+            if !make_out.status.success() {
+                let build_error = String::from_utf8_lossy(&make_out.stderr).to_string();
+                fs::write(run_dir.join("build_error.txt"), build_error).unwrap();
+            }
+        }
+    }
+}
+
 fn copy_files_with_extension(
     source_folder: &Path,
     target_folder: &Path,
@@ -216,7 +221,6 @@ main = text "Hello!"
             .output()
             .expect("Failed to compile");
         //make.wait();
-
 
         //output.status
         // Execute `ls` in the current directory of the program.

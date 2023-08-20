@@ -7,11 +7,14 @@ import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, a, button, div, h1, iframe, input, label, li, nav, p, span, text, textarea, ul)
 import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Http
+import Json.Encode as Encode
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlIntro as HtmlIntro
 import Markdown
+import SHA1
 import String exposing (fromInt)
 import Task
 
@@ -23,9 +26,6 @@ port restore : ( String, Int ) -> Cmd msg
 
 
 port restored : (List String -> msg) -> Sub msg
-
-
-port run : List ( String, String ) -> Cmd msg
 
 
 port readyForPreview : (String -> msg) -> Sub msg
@@ -177,6 +177,7 @@ type Msg
     | StartDragging DraggableId
     | DragMsg (Draggable.Msg DraggableId)
     | ToggleOutline
+    | Compiled String (Result Http.Error ())
 
 
 dragConfig : Draggable.Config DraggableId Msg
@@ -257,12 +258,17 @@ update msg model =
 
         ( RunCurrentLesson, CurrentLesson { lesson } ) ->
             ( { model | previewState = Loading }
-            , run <| filesForRunning lesson
+            , compile <| filesForRunning lesson
             )
 
         ( ChangeEditor pos value, CurrentLesson current ) ->
             ( { model | currentLesson = CurrentLesson { current | lesson = updateEditor current.lesson pos value } }
             , store ( lessonIdStr current.description.id, String.fromInt pos, value )
+            )
+
+        ( Compiled hash _, _ ) ->
+            ( { model | previewState = Loaded hash }
+            , Cmd.none
             )
 
         ( ShowPreview hash, _ ) ->
@@ -294,6 +300,43 @@ update msg model =
 filesForRunning : Lesson -> List ( String, String )
 filesForRunning lesson =
     List.map (\{ filename, content } -> ( filename, content )) <| lessonFiles lesson
+
+
+type alias CompilePayload =
+    { files : List ( String, String ) }
+
+
+payloadEncoder : CompilePayload -> Encode.Value
+payloadEncoder { files } =
+    let
+        fileEncoder : ( String, String ) -> Encode.Value
+        fileEncoder ( filename, content ) =
+            Encode.object
+                [ ( "filename", Encode.string filename )
+                , ( "content", Encode.string content )
+                ]
+
+        filesValue : Encode.Value
+        filesValue =
+            Encode.list fileEncoder files
+    in
+    Encode.object [ ( "files", filesValue ) ]
+
+
+compile : List ( String, String ) -> Cmd Msg
+compile files =
+    let
+        bodyString =
+            Encode.encode 0 <| payloadEncoder { files = files }
+
+        hash =
+            SHA1.toBase64 <| SHA1.fromString bodyString
+    in
+    Http.post
+        { url = "/compile/" ++ hash
+        , body = Http.stringBody "application/json" bodyString
+        , expect = Http.expectWhatever (Compiled hash)
+        }
 
 
 updateEditor : List LessonFile -> Int -> String -> List LessonFile
@@ -343,11 +386,11 @@ view model =
             CurrentLesson { lesson, description } ->
                 lessonView model.editorsHeight model.lessonWidth lesson description model.previewState
 
-            CurrentChapter {title, body} ->
-              div []
-                [h1 [] [text title]
-                , Markdown.toHtml [class "content"] body
-                ]
+            CurrentChapter { title, body } ->
+                div []
+                    [ h1 [] [ text title ]
+                    , Markdown.toHtml [ class "content" ] body
+                    ]
         ]
 
 
@@ -389,7 +432,7 @@ preview _ previewState =
             text "loading.."
 
         Loaded hash ->
-            iframe [ src <| "/run/index.html?run=" ++ hash ] []
+            iframe [ src <| "/run/" ++ hash ++ "/index.html" ] []
 
 
 lessonFiles : Lesson -> List LessonFile
@@ -423,7 +466,7 @@ outlineView : Outline -> Html Msg
 outlineView ol =
     case ol of
         Chapter { title } subChapters ->
-            div [] [ a [onClick <| GotoChapter title] [ text title ], ul [] <| List.map outlineView subChapters ]
+            div [] [ a [ onClick <| GotoChapter title ] [ text title ], ul [] <| List.map outlineView subChapters ]
 
         Lesson { title, id } ->
             li [ onClick <| GotoLesson id ] [ a [] [ text title ] ]
