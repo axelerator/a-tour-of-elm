@@ -6,14 +6,13 @@ use std::{
 };
 
 use axum::{
-    extract,
+    extract::{self, DefaultBodyLimit},
     http::StatusCode,
     routing::{get, post},
-    Router,
+    Router, Json,
 };
 use mime;
-use serde::Deserialize;
-use serde_json;
+use serde::{Serialize, Deserialize};
 use tokio::{self, time};
 use tower_http::services::{ServeDir, ServeFile};
 use walkdir::WalkDir;
@@ -28,7 +27,9 @@ async fn main() {
         .nest_service("/assets", serve_dir);
     app = app
         .route("/compile/:run", post(compile_handler))
-        .route("/run/:run_hash/:rest", get(handler));
+        .route("/run/:run_hash/:rest", get(handler))
+        .layer(DefaultBodyLimit::max(1024));
+
     tokio::spawn(async {
         let minutes_10 = 10 * 60 * 1000;
         let mut interval = time::interval(Duration::from_millis(minutes_10));
@@ -89,14 +90,20 @@ async fn handler(
     }
 }
 
+#[derive(Serialize)]
+struct CompileResponse {
+    error: Option<String>
+}
+
 async fn compile_handler(
     axum::extract::Path(run_hash): axum::extract::Path<String>,
     extract::Json(lesson_files): extract::Json<LessonFiles>,
-) {
+) -> Json<CompileResponse> {
     let tmp = PathBuf::from("tmp");
     let elm_boiler_plate = "elm_boiler_plate";
     let elm_boiler_plate_dir = tmp.join(elm_boiler_plate);
     let run_dir = tmp.join(run_hash);
+    let build_error_file = run_dir.join("build_error.txt");
     if !run_dir.exists() {
         fs::create_dir_all(&run_dir).unwrap();
 
@@ -129,11 +136,18 @@ async fn compile_handler(
                 .arg("--output=../main.js")
                 .output()
                 .expect("Failed to compile");
-            println!("status: {}", make_out.status);
             if !make_out.status.success() {
                 let build_error = String::from_utf8_lossy(&make_out.stderr).to_string();
-                fs::write(run_dir.join("build_error.txt"), build_error).unwrap();
+                fs::write(build_error_file, build_error.clone()).unwrap();
+                return Json(CompileResponse { error: Some(build_error) });
             }
+        }
+        return Json(CompileResponse { error: None });
+    } else {
+        if build_error_file.exists() {
+            return Json(CompileResponse { error: Some(fs::read_to_string(build_error_file).unwrap()) });
+        } else {
+            return Json(CompileResponse { error: None });
         }
     }
 }

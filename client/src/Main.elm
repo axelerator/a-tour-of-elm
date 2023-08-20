@@ -4,10 +4,11 @@ import Browser
 import Browser.Dom exposing (getViewport)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
-import Html exposing (Html, a, button, div, h1, iframe, input, label, li, nav, p, span, text, textarea, ul)
+import Html exposing (Html, a, button, code, div, h1, iframe, input, label, li, nav, p, pre, span, text, textarea, ul)
 import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Json.Decode as Decode
 import Json.Encode as Encode
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
@@ -128,6 +129,7 @@ type PreviewState
     = NoPreview
     | Loading
     | Loaded String
+    | Failed String
 
 
 type CurrentPage
@@ -177,7 +179,7 @@ type Msg
     | StartDragging DraggableId
     | DragMsg (Draggable.Msg DraggableId)
     | ToggleOutline
-    | Compiled String (Result Http.Error ())
+    | Compiled String (Result Http.Error CompileResponse)
 
 
 dragConfig : Draggable.Config DraggableId Msg
@@ -266,8 +268,22 @@ update msg model =
             , store ( lessonIdStr current.description.id, String.fromInt pos, value )
             )
 
-        ( Compiled hash _, _ ) ->
-            ( { model | previewState = Loaded hash }
+        ( Compiled hash response, _ ) ->
+            let
+                previewState =
+                    case response of
+                        Err _ ->
+                            Failed "An unexpected error occurred"
+
+                        Ok { error } ->
+                            case error of
+                                Nothing ->
+                                    Loaded hash
+
+                                Just errorStr ->
+                                    Failed errorStr
+            in
+            ( { model | previewState = previewState }
             , Cmd.none
             )
 
@@ -330,13 +346,23 @@ compile files =
             Encode.encode 0 <| payloadEncoder { files = files }
 
         hash =
-            SHA1.toBase64 <| SHA1.fromString bodyString
+            SHA1.toHex <| SHA1.fromString bodyString
     in
     Http.post
         { url = "/compile/" ++ hash
         , body = Http.stringBody "application/json" bodyString
-        , expect = Http.expectWhatever (Compiled hash)
+        , expect = Http.expectJson (Compiled hash) compileResponseDecoder
         }
+
+
+type alias CompileResponse =
+    { error : Maybe String }
+
+
+compileResponseDecoder : Decode.Decoder CompileResponse
+compileResponseDecoder =
+    Decode.map CompileResponse
+        (Decode.field "error" <| Decode.maybe Decode.string)
 
 
 updateEditor : List LessonFile -> Int -> String -> List LessonFile
@@ -433,6 +459,9 @@ preview _ previewState =
 
         Loaded hash ->
             iframe [ src <| "/run/" ++ hash ++ "/index.html" ] []
+
+        Failed msg ->
+            pre [] [ code [] [ text msg ] ]
 
 
 lessonFiles : Lesson -> List LessonFile

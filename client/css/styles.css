@@ -83,6 +83,7 @@ nav .outline  li {
   bottom: 0;
   right: 0;
   top: 50%;
+  overflow: scroll;
 }
 
 
