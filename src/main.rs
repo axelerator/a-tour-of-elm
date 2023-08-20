@@ -1,14 +1,14 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::{Command, Stdio}, time::Duration,
 };
 
 use axum::{http::StatusCode, routing::get, Router};
 use mime;
 use serde::Deserialize;
 use serde_json;
-use tokio;
+use tokio::{self, time};
 use tower_cookies::{CookieManagerLayer, Cookies};
 use tower_http::services::{ServeDir, ServeFile};
 use walkdir::WalkDir;
@@ -24,6 +24,14 @@ async fn main() {
     app = app
         .route("/run/:rest", get(handler))
         .layer(CookieManagerLayer::new());
+    tokio::spawn(async {
+        let minutes_10 = 10 * 60 * 1000;
+        let mut interval = time::interval(Duration::from_millis(minutes_10));
+        loop {
+            interval.tick().await;
+            clear_cache();
+        }
+    });
 
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
@@ -60,7 +68,6 @@ async fn handler(
         .map(|c| serde_json::from_str(&c.value()).unwrap())
         .unwrap();
 
-    println!("Run {}", run_hash);
     let tmp = PathBuf::from("tmp");
     let elm_boiler_plate = "elm_boiler_plate";
     let elm_boiler_plate_dir = tmp.join(elm_boiler_plate);
@@ -140,12 +147,7 @@ fn copy_files_with_extension(
             if let Some(extension) = source_path.extension() {
                 if extension == target_extension {
                     let target_path = target_folder.join(source_path.file_name().unwrap());
-                    println!(
-                        "source: {:?} {:?}",
-                        source_path,
-                        fs::read_to_string(source_path).unwrap()
-                    );
-                    println!("target {:?}", target_path);
+                    // for some reason fs::copy results in an empty file
                     //fs::copy(source_path, &target_path)?;
                     fs::write(target_path, fs::read_to_string(source_path).unwrap()).unwrap();
                 }
@@ -206,15 +208,15 @@ main = text "Hello!"
 "#;
         fs::write(elm_boiler_plate_dir.join("src").join("Main.elm"), main).unwrap();
 
-        let _make = Command::new("elm")
+        let _make_out = Command::new("elm")
             .current_dir(&elm_boiler_plate_dir)
             .arg("make")
             .arg("src/Main.elm")
             .arg("--output=main.js")
-            .spawn()
-            .expect("Failed to compile")
-            .wait();
+            .output()
+            .expect("Failed to compile");
         //make.wait();
+
 
         //output.status
         // Execute `ls` in the current directory of the program.
