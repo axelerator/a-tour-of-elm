@@ -1,14 +1,13 @@
-module Lessons.CSSIntro exposing (lesson, lessonDescription)
+module Lessons.CSSIntro exposing (lessonDescription)
 
-import Lesson exposing (FileType(..), Lesson(..), LessonId(..))
-import Lessons.HtmlIntro exposing (lesson)
+import Lesson exposing (FileType(..), LessonId(..))
 
 
 lessonDescription =
     { id = CSSIntroId
     , title = "Hello CSS"
     , body = body
-    , lesson = lesson
+    , lessonFiles = [ indexHtml, stylesCss ]
     }
 
 
@@ -20,20 +19,18 @@ body =
   """
 
 
-lesson : Lesson
-lesson =
-    CSSIntro
-        { indexHtml =
-            { filename = "index.html"
-            , filetype = HtmlFile
-            , content = htmlIntroIndexHtml
-            }
-        , stylesCss =
-            { filename = "styles.css"
-            , filetype = CSSFile
-            , content = stylesCSS
-            }
-        }
+indexHtml =
+    { filename = "index.html"
+    , filetype = HtmlFile
+    , content = htmlIntroIndexHtml
+    }
+
+
+stylesCss =
+    { filename = "styles.css"
+    , filetype = CSSFile
+    , content = stylesCSS
+    }
 
 
 htmlIntroIndexHtml =

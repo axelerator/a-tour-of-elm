@@ -1,25 +1,21 @@
-module Lessons.ElmIntro exposing (lesson, lessonDescription)
+module Lessons.ElmIntro exposing (lessonDescription)
 
-import Lesson exposing (FileType(..), Lesson(..), LessonId(..))
+import Lesson exposing (FileType(..), LessonId(..))
 
 
 lessonDescription =
     { id = ElmIntroId
     , title = "Hello Elm"
     , body = body
-    , lesson = lesson
+    , lessonFiles = [ indexHtml ]
     }
 
 
-lesson : Lesson
-lesson =
-    ElmIntro
-        { indexHtml =
-            { filename = "index.html"
-            , filetype = HtmlFile
-            , content = htmlIntroIndexHtml
-            }
-        }
+indexHtml =
+    { filename = "index.html"
+    , filetype = HtmlFile
+    , content = htmlIntroIndexHtml
+    }
 
 
 body =

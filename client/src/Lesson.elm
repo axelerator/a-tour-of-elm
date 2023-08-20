@@ -1,11 +1,13 @@
 module Lesson exposing (..)
 
+
 type alias LessonDescription =
-  { id: LessonId
-  , lesson : Lesson
-  , title : String
-  , body : String
-  }
+    { id : LessonId
+    , title : String
+    , body : String
+    , lessonFiles : List LessonFile
+    }
+
 
 type FileType
     = HtmlFile
@@ -26,15 +28,18 @@ type LessonId
     | ElmIntroId
 
 
-type Lesson
-    = HtmlIntro { indexHtml : LessonFile }
-    | CSSIntro { indexHtml : LessonFile, stylesCss: LessonFile }
-    | ElmIntro { indexHtml : LessonFile }
+type alias Lesson =
+    List LessonFile
+
 
 lessonIdStr : LessonId -> String
 lessonIdStr id =
-  case id of
-      HtmlIntroId -> "HtmlIntro"
-      CSSIntroId -> "CSSIntro"
-      ElmIntroId -> "ElmIntro"
+    case id of
+        HtmlIntroId ->
+            "HtmlIntro"
 
+        CSSIntroId ->
+            "CSSIntro"
+
+        ElmIntroId ->
+            "ElmIntro"

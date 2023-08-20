@@ -7,7 +7,7 @@ import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, button, div, iframe, input, label, li, text, textarea, ul)
 import Html.Attributes exposing (checked, class, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Lesson exposing (FileType(..), Lesson(..), LessonDescription, LessonFile, LessonId(..), lessonIdStr)
+import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
 import Lessons.HtmlIntro as HtmlIntro
 import String exposing (fromInt)
@@ -58,7 +58,7 @@ type PreviewState
 
 
 type alias Model =
-    { currentLesson : Maybe { lesson : Lesson, description : LessonDescription }
+    { currentLesson : Maybe { lesson : List LessonFile, description : LessonDescription }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -151,8 +151,8 @@ update msg model =
                 description =
                     lessonDescriptionById id
             in
-            ( { model | currentLesson = Just { lesson = description.lesson, description = description }, previewState = NoPreview }
-            , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lesson )
+            ( { model | currentLesson = Just { lesson = description.lessonFiles, description = description }, previewState = NoPreview }
+            , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lessonFiles )
             )
 
         ( RunCurrentLesson, Just { lesson } ) ->
@@ -196,8 +196,8 @@ filesForRunning lesson =
     List.map (\{ filename, content } -> ( filename, content )) <| lessonFiles lesson
 
 
-updateEditor : Lesson -> Int -> String -> Lesson
-updateEditor lesson pos value =
+updateEditor : List LessonFile -> Int -> String -> List LessonFile
+updateEditor files pos value =
     let
         updateFile i file =
             if i == pos && value /= "NOT YET STORED" then
@@ -205,24 +205,8 @@ updateEditor lesson pos value =
 
             else
                 file
-
-        updatedFiles =
-            List.indexedMap updateFile <| lessonFiles lesson
     in
-    updateLessonEditors updatedFiles lesson
-
-
-updateLessonEditors : List LessonFile -> Lesson -> Lesson
-updateLessonEditors files lesson =
-    case ( lesson, files ) of
-        ( HtmlIntro lesson_, [ indexHtml ] ) ->
-            HtmlIntro { lesson_ | indexHtml = indexHtml }
-
-        ( CSSIntro lesson_, [ indexHtml, stylesCss ] ) ->
-            CSSIntro { lesson_ | indexHtml = indexHtml, stylesCss = stylesCss }
-
-        _ ->
-            lesson
+    List.indexedMap updateFile files
 
 
 subscriptions : Model -> Sub Msg
@@ -291,21 +275,13 @@ preview _ previewState =
 
 
 lessonFiles : Lesson -> List LessonFile
-lessonFiles lesson =
-    case lesson of
-        HtmlIntro { indexHtml } ->
-            [ indexHtml ]
-
-        CSSIntro { indexHtml, stylesCss } ->
-            [ indexHtml, stylesCss ]
-
-        ElmIntro { indexHtml } ->
-            [ indexHtml ]
+lessonFiles files =
+    files
 
 
-lessonEditors : Lesson -> List (Html Msg)
-lessonEditors lesson =
-    List.concat <| List.indexedMap fileView <| lessonFiles lesson
+lessonEditors : List LessonFile -> List (Html Msg)
+lessonEditors files =
+    List.concat <| List.indexedMap fileView files
 
 
 fileView : Int -> LessonFile -> List (Html Msg)

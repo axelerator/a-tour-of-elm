@@ -1,25 +1,21 @@
-module Lessons.HtmlIntro exposing (lesson, lessonDescription)
+module Lessons.HtmlIntro exposing (lessonDescription)
 
-import Lesson exposing (FileType(..), Lesson(..), LessonId(..))
+import Lesson exposing (FileType(..), LessonId(..))
 
 
 lessonDescription =
     { id = HtmlIntroId
     , title = "Hello Html"
     , body = body
-    , lesson = lesson
+    , lessonFiles = [ indexHtml ]
     }
 
 
-lesson : Lesson
-lesson =
-    HtmlIntro
-        { indexHtml =
-            { filename = "index.html"
-            , filetype = HtmlFile
-            , content = htmlIntroIndexHtml
-            }
-        }
+indexHtml =
+    { filename = "index.html"
+    , filetype = HtmlFile
+    , content = htmlIntroIndexHtml
+    }
 
 
 body =
