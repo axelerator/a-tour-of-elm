@@ -1,11 +1,11 @@
-module Lessons.HtmlIntro exposing (lesson, lessonDescription)
+module Lessons.ElmIntro exposing (lesson, lessonDescription)
 
 import Lesson exposing (FileType(..), Lesson(..), LessonId(..))
 
 
 lessonDescription =
-    { id = HtmlIntroId
-    , title = "Hello Html"
+    { id = ElmIntroId
+    , title = "Hello Elm"
     , body = body
     , lesson = lesson
     }
@@ -13,7 +13,7 @@ lessonDescription =
 
 lesson : Lesson
 lesson =
-    HtmlIntro
+    ElmIntro
         { indexHtml =
             { filename = "index.html"
             , filetype = HtmlFile

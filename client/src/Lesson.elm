@@ -10,6 +10,7 @@ type alias LessonDescription =
 type FileType
     = HtmlFile
     | CSSFile
+    | ElmFile
 
 
 type alias LessonFile =
@@ -22,15 +23,18 @@ type alias LessonFile =
 type LessonId
     = HtmlIntroId
     | CSSIntroId
+    | ElmIntroId
 
 
 type Lesson
     = HtmlIntro { indexHtml : LessonFile }
     | CSSIntro { indexHtml : LessonFile, stylesCss: LessonFile }
+    | ElmIntro { indexHtml : LessonFile }
 
 lessonIdStr : LessonId -> String
 lessonIdStr id =
   case id of
       HtmlIntroId -> "HtmlIntro"
       CSSIntroId -> "CSSIntro"
+      ElmIntroId -> "ElmIntro"
 
