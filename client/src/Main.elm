@@ -2,15 +2,16 @@ port module Main exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)
+import Draggable
+import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, button, div, iframe, input, label, li, text, textarea, ul)
-import Html.Attributes exposing (class, for, id, name, src, tabindex, type_, value)
+import Html.Attributes exposing (checked, class, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Lesson exposing (FileType(..), Lesson(..), LessonFile, LessonId(..), lessonId, lessonIdStr, lessonTitle)
 import Lessons.CSSIntro as CSSIntro
 import Lessons.HtmlIntro as HtmlIntro
 import String exposing (fromInt)
 import Task
-import Html.Attributes exposing (style)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -54,17 +55,26 @@ type PreviewState
 type alias Model =
     { currentLesson : Maybe Lesson
     , previewState : PreviewState
-    , viewPort : Maybe Browser.Dom.Viewport
     , lessonWidth : Int
+    , editorsHeight : Int
+    , drag : Draggable.State DraggableId
+    , beingDragged : Maybe DraggableId
     }
+
+
+type DraggableId
+    = VerticalSplit
+    | HorizontalSplit
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { currentLesson = Nothing
       , previewState = NoPreview
-      , viewPort = Nothing
       , lessonWidth = 100
+      , editorsHeight = 100
+      , drag = Draggable.init
+      , beingDragged = Nothing
       }
     , Task.perform GotViewPort getViewport
     )
@@ -77,15 +87,53 @@ type Msg
     | ShowPreview String
     | RunCurrentLesson
     | GotViewPort Browser.Dom.Viewport
+    | OnDragBy Draggable.Delta
+    | StartDragging DraggableId
+    | DragMsg (Draggable.Msg DraggableId)
+
+
+dragConfig : Draggable.Config DraggableId Msg
+dragConfig =
+    Draggable.customConfig
+        [ onDragBy OnDragBy
+        , onDragStart StartDragging
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model.currentLesson ) of
+        ( StartDragging id, _ ) ->
+            ( { model | beingDragged = Just id }, Cmd.none )
+
+        ( OnDragBy ( dx, dy ), _ ) ->
+            let
+                model_ =
+                    case model.beingDragged of
+                        Just HorizontalSplit ->
+                            { model | editorsHeight = model.editorsHeight + round dy }
+
+                        Just VerticalSplit ->
+                            { model | lessonWidth = model.lessonWidth + round dx }
+
+                        Nothing ->
+                            model
+            in
+            ( model_
+            , Cmd.none
+            )
+
+        ( DragMsg dragMsg, _ ) ->
+            Draggable.update dragConfig dragMsg model
+
         ( GotViewPort vp, _ ) ->
-          ( { model | viewPort = Just vp }
-          , Cmd.none
-          )
+            ( { model
+                | lessonWidth = round <| 0.5 * vp.viewport.width
+                , editorsHeight = round <| 0.5 * vp.viewport.height
+              }
+            , Cmd.none
+            )
+
         ( GotoLesson id, _ ) ->
             let
                 currentLesson =
@@ -96,7 +144,7 @@ update msg model =
                         CSSIntroId ->
                             CSSIntro.lesson
             in
-            ( { model | currentLesson = Just currentLesson }
+            ( { model | currentLesson = Just currentLesson, previewState = NoPreview }
             , restore ( lessonIdStr <| lessonId currentLesson, List.length <| lessonEditors currentLesson )
             )
 
@@ -174,12 +222,15 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.currentLesson of
         Just _ ->
-            case model.previewState of
-                Loading ->
-                    readyForPreview ShowPreview
+            Sub.batch
+                [ Draggable.subscriptions DragMsg model.drag
+                , case model.previewState of
+                    Loading ->
+                        readyForPreview ShowPreview
 
-                _ ->
-                    restored GotRestoredContent
+                    _ ->
+                        restored GotRestoredContent
+                ]
 
         Nothing ->
             Sub.none
@@ -191,24 +242,31 @@ view model =
         [ ul [] <| List.map lessonItemView lessons
         , case model.currentLesson of
             Just lesson ->
-                lessonView model.lessonWidth lesson model.previewState
+                lessonView model.editorsHeight model.lessonWidth lesson model.previewState
 
             Nothing ->
                 text ""
         ]
 
-px : Int -> String
-px x = (fromInt x) ++ "px"
 
-lessonView : Int -> Lesson -> PreviewState -> Html Msg
-lessonView lessonWidth lesson previewState =
+px : Int -> String
+px x =
+    fromInt x ++ "px"
+
+
+lessonView : Int -> Int -> Lesson -> PreviewState -> Html Msg
+lessonView editorsHeight lessonWidth lesson previewState =
     div [ class "lessonContainer" ]
-        [ div [ class "separator", style "left" (px lessonWidth)  ] []
+        [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
         , div [ class "left", style "width" (px lessonWidth) ] [ text (lessonTitle lesson) ]
-        , div [ class "right", style "left" (px (lessonWidth + 5)) ]
-            [ div [ class "tabs" ] <| lessonEditors lesson
-            , button [ onClick RunCurrentLesson ] [ text "run" ]
-            , preview lesson previewState
+        , div [ class "right", style "left" (px (lessonWidth + 10)) ]
+            [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
+            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors lesson ]
+            , div [ class "preview", style "top" (px <| editorsHeight + 10) ] 
+                [ button [ onClick RunCurrentLesson ] [ text "run" ]
+                , preview lesson previewState
+                ]
+
             ]
         ]
 

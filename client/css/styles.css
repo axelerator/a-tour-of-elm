@@ -2,9 +2,17 @@
   font-family: monospace;
 }
 
+.lessonContainer {
+  position: absolute;
+  top: 3em;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
 .lessonContainer .separator {
-  background-color: red;
-  width: 5px;
+  background-color: var(--dropdown-border-color);
+  width: 10px;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -27,11 +35,39 @@
   left: 50%;
 }
 
+
+.lessonContainer .separatorH {
+  background-color: var(--dropdown-border-color);
+  height: 10px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  cursor: move;
+}
+
+.lessonContainer .right .preview {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  top: 50%;
+}
+
+
+.editors {
+  height: 50%;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
   margin: 0 auto 20px;
   border-radius: 10px 10px 0 0;
+  height: 100%;
+}
+
+.tabs textarea {
+  height: calc(100% - 3em);
 }
 
 .radiotab {
@@ -41,46 +77,53 @@
 
 .label {
   width: 100%;
-  padding: 22px 20px;
-  background: #e5e5e5;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 23px;
-  color: #7f7f7f;
-  transition: background .3s, color .3s;
-  border: none;
-  border-radius: 0;
   text-align: center;
-}
+  height: 3em;
 
-.label:hover {
-  background: #d8d8d8;
-}
+  --background-color: var(--secondary);
+  --border-color: var(--secondary);
+  --color: var(--secondary-inverse);
 
-.label:active {
-  background: #ccc;  
-}
-
-.radiotab:checked + .label {
-  background: #fff;
-  color: #000;
-  border-top: solid 2px #000;
-  border-left: solid 2px #000;
-  border-right: solid 2px #000;
+  --box-shadow: var(--button-box-shadow, 0 0 0 rgba(0, 0, 0, 0));
+  padding: var(--form-element-spacing-vertical) var(--form-element-spacing-horizontal);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius);
   border-bottom: none;
+
+  outline: 0;
+  background-color: var(--background-color);
+  box-shadow: var(--box-shadow);
+  color: var(--color);
+  font-weight: var(--font-weight);
+  font-size: 1rem;
+  line-height: var(--line-height);
+  text-align: center;
+  cursor: pointer;
+  transition:background-color var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition)
+
+}
+
+.tabs:not(:has(.radiotab:checked)) :nth-child(1 of .label),
+.radiotab:checked + .label {
+  --background-color: var(--primary);
+  --border-color: var(--primary);
+  --color: var(--primary-inverse);
 }
 
 .panel {
   display: none;
-  padding: 20px 30px 30px;
-  background: #fff;
   width: 100%;
-  border-left: solid 2px #000;
-  border-bottom: solid 2px #000;
-  border-right: solid 2px #000;
+  height: 100%;
 }
 
-.radiotab:checked + .label + .panel {
+.preview iframe {
+  border: 1px solid red;
+  width: 100%;
+  height: calc(100% - 4.5em);
+}
+
+.radiotab:checked + .label + .panel,
+.tabs:not(:has(.radiotab:checked)) :nth-child(1 of .panel) {
   display: block;
 }
 
