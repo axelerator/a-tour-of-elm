@@ -10,6 +10,7 @@ import Html.Events exposing (onClick, onInput)
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
 import Lessons.HtmlIntro as HtmlIntro
+import Lessons.ElmIntro as ElmIntro
 import String exposing (fromInt)
 import Task
 
@@ -33,6 +34,7 @@ lessonDescriptions : List LessonDescription
 lessonDescriptions =
     [ HtmlIntro.lessonDescription
     , CSSIntro.lessonDescription
+    , ElmIntro.lessonDescription
     ]
 
 
