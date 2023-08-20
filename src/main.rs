@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fs};
 
 use axum::{
     http::StatusCode,
@@ -30,7 +30,6 @@ async fn main() {
         .unwrap();
 }
 
-const COOKIE_NAME: &str = "lessonFiles";
 
 #[derive(Deserialize, Debug)]
 struct LessonFiles {
@@ -44,22 +43,40 @@ struct LessonFile {
 }
 
 const CONTENT_TYPE: &str = "Content-Type";
+const RUN_COOKIE_NAME: &str = "run";
+const COOKIE_NAME: &str = "lessonFiles";
 
 async fn handler(
     axum::extract::Path(path): axum::extract::Path<String>,
     cookies: Cookies,
 ) -> (StatusCode, [(&'static str, String); 1], String) {
+    let run_hash: String = cookies
+        .get(RUN_COOKIE_NAME)
+        .map(|c| c.value().to_string() )
+        .unwrap();
     let lesson_files: LessonFiles = cookies
         .get(COOKIE_NAME)
         .map(|c| serde_json::from_str(&c.value()).unwrap() )
         .unwrap();
 
-    let file = lesson_files.files.into_iter().find(|f| f.filename == path);
+    println!("Run {}", run_hash);
+    let tmp = PathBuf::from("tmp");
+    let run_dir = tmp.join(run_hash);
+    if !run_dir.exists() {
+        fs::create_dir_all(&run_dir).unwrap();
+
+        for file in lesson_files.files.iter() {
+            let path = run_dir.join(&file.filename);
+            fs::write(path, file.content.clone()).unwrap();
+        }
+    }
+    let file = lesson_files.files.iter().find(|f| f.filename == path);
+
 
     match file {
         Some(file) => {
             let content_type : mime::Mime = 
-                if let Some(extension) = PathBuf::from(file.filename).extension() {
+                if let Some(extension) = PathBuf::from(&file.filename).extension() {
                     match extension.to_string_lossy().to_string().as_str() {
                         "html" => mime::TEXT_HTML_UTF_8,
                         "css" => mime::TEXT_CSS_UTF_8,
@@ -71,7 +88,7 @@ async fn handler(
             let content_type_str = content_type.to_string();
             ( StatusCode::OK,
             [(CONTENT_TYPE, content_type_str)],
-            file.content
+            fs::read_to_string(run_dir.join(&file.filename)).unwrap()
             )
             }
         ,

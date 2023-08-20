@@ -50,6 +50,8 @@
       .map((b) => b.toString(16).padStart(2, "0"))
       .join(""); // convert bytes to hex string
     document.cookie = `lessonFiles=${src}`;
+    document.cookie = `run=${hashHex}`;
+    console.log(hashHex, object)
     app.ports.readyForPreview.send(hashHex);
   });
 
