@@ -4,13 +4,14 @@ import Browser
 import Browser.Dom exposing (getViewport)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
-import Html exposing (Html, a, button, div, iframe, input, label, li, nav, p, span, text, textarea, ul)
-import Html.Attributes exposing (checked, class, classList, for, id, name, src, style, tabindex, type_, value)
+import Html exposing (Html, a, button, div, h1, iframe, input, label, li, nav, p, span, text, textarea, ul)
+import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlIntro as HtmlIntro
+import Markdown
 import String exposing (fromInt)
 import Task
 
@@ -38,17 +39,79 @@ lessonDescriptions =
     ]
 
 
+type alias ChapterContent =
+    { title : String
+    , body : String
+    }
+
+
 type Outline
-    = Chapter String (List Outline)
+    = Chapter ChapterContent (List Outline)
     | Lesson LessonDescription
+
+
+welcome : ChapterContent
+welcome =
+    { title = "Welcome"
+    , body = "Hi there!"
+    }
+
+
+htmlChapterContent : ChapterContent
+htmlChapterContent =
+    { title = "What is HTML?"
+    , body = "Hi there!"
+    }
+
+
+cssChapterContent : ChapterContent
+cssChapterContent =
+    { title = "What is CSS?"
+    , body = "Hi there!"
+    }
+
+
+elmChapterContent : ChapterContent
+elmChapterContent =
+    { title = "What is Elm?"
+    , body = "Hi there!"
+    }
 
 
 outline : List Outline
 outline =
-    [ Chapter "Html" [ Lesson HtmlIntro.lessonDescription ]
-    , Chapter "CSS" [ Lesson CSSIntro.lessonDescription ]
-    , Chapter "Elm" [ Lesson ElmIntro.lessonDescription ]
+    [ Chapter welcome []
+    , Chapter htmlChapterContent [ Lesson HtmlIntro.lessonDescription ]
+    , Chapter cssChapterContent [ Lesson CSSIntro.lessonDescription ]
+    , Chapter elmChapterContent [ Lesson ElmIntro.lessonDescription ]
     ]
+
+
+
+-- TODO: make recursive
+
+
+findChapter : String -> ChapterContent
+findChapter targetTitle =
+    let
+        chapterWithTitle : Outline -> Bool
+        chapterWithTitle o =
+            case o of
+                Chapter { title } _ ->
+                    title == targetTitle
+
+                _ ->
+                    False
+
+        result =
+            List.head <| List.filter chapterWithTitle outline
+    in
+    case result of
+        Just (Chapter content _) ->
+            content
+
+        _ ->
+            welcome
 
 
 main : Program () Model Msg
@@ -67,8 +130,13 @@ type PreviewState
     | Loaded String
 
 
+type CurrentPage
+    = CurrentLesson { lesson : List LessonFile, description : LessonDescription }
+    | CurrentChapter ChapterContent
+
+
 type alias Model =
-    { currentLesson : Maybe { lesson : List LessonFile, description : LessonDescription }
+    { currentLesson : CurrentPage
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -85,7 +153,7 @@ type DraggableId
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { currentLesson = Nothing
+    ( { currentLesson = CurrentChapter welcome
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -99,6 +167,7 @@ init _ =
 
 type Msg
     = GotoLesson LessonId
+    | GotoChapter String
     | ChangeEditor Int String
     | GotRestoredContent (List String)
     | ShowPreview String
@@ -170,20 +239,29 @@ update msg model =
                     lessonDescriptionById id
             in
             ( { model
-                | currentLesson = Just { lesson = description.lessonFiles, description = description }
+                | currentLesson = CurrentLesson { lesson = description.lessonFiles, description = description }
                 , previewState = NoPreview
                 , showOutline = False
               }
             , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lessonFiles )
             )
 
-        ( RunCurrentLesson, Just { lesson } ) ->
+        ( GotoChapter title, _ ) ->
+            ( { model
+                | currentLesson = CurrentChapter (findChapter title)
+                , previewState = NoPreview
+                , showOutline = False
+              }
+            , Cmd.none
+            )
+
+        ( RunCurrentLesson, CurrentLesson { lesson } ) ->
             ( { model | previewState = Loading }
             , run <| filesForRunning lesson
             )
 
-        ( ChangeEditor pos value, Just current ) ->
-            ( { model | currentLesson = Just { current | lesson = updateEditor current.lesson pos value } }
+        ( ChangeEditor pos value, CurrentLesson current ) ->
+            ( { model | currentLesson = CurrentLesson { current | lesson = updateEditor current.lesson pos value } }
             , store ( lessonIdStr current.description.id, String.fromInt pos, value )
             )
 
@@ -192,7 +270,7 @@ update msg model =
             , Cmd.none
             )
 
-        ( GotRestoredContent contents, Just current ) ->
+        ( GotRestoredContent contents, CurrentLesson current ) ->
             let
                 indexedContents =
                     List.indexedMap (\i c -> ( i, c )) contents
@@ -203,7 +281,7 @@ update msg model =
                 restoredEditors =
                     List.foldr f current.lesson indexedContents
             in
-            ( { model | currentLesson = Just <| { current | lesson = restoredEditors } }
+            ( { model | currentLesson = CurrentLesson <| { current | lesson = restoredEditors } }
             , Cmd.none
             )
 
@@ -234,7 +312,7 @@ updateEditor files pos value =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.currentLesson of
-        Just _ ->
+        CurrentLesson _ ->
             Sub.batch
                 [ Draggable.subscriptions DragMsg model.drag
                 , case model.previewState of
@@ -245,7 +323,7 @@ subscriptions model =
                         restored GotRestoredContent
                 ]
 
-        Nothing ->
+        _ ->
             Sub.none
 
 
@@ -262,11 +340,14 @@ view model =
                 ]
             ]
         , case model.currentLesson of
-            Just { lesson, description } ->
+            CurrentLesson { lesson, description } ->
                 lessonView model.editorsHeight model.lessonWidth lesson description model.previewState
 
-            Nothing ->
-                text ""
+            CurrentChapter {title, body} ->
+              div []
+                [h1 [] [text title]
+                , Markdown.toHtml [class "content"] body
+                ]
         ]
 
 
@@ -279,7 +360,7 @@ lessonView : Int -> Int -> Lesson -> LessonDescription -> PreviewState -> Html M
 lessonView editorsHeight lessonWidth lesson description previewState =
     div [ class "lessonContainer" ]
         [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
-        , div [ class "left", style "width" (px lessonWidth) ] [ text description.title ]
+        , div [ class "left", style "width" (px lessonWidth) ] <| lessonContentView description
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
             , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors lesson ]
@@ -289,6 +370,13 @@ lessonView editorsHeight lessonWidth lesson description previewState =
                 ]
             ]
         ]
+
+
+lessonContentView : LessonDescription -> List (Html Msg)
+lessonContentView { title, body } =
+    [ h1 [] [ text title ]
+    , Markdown.toHtml [ class "content" ] body
+    ]
 
 
 preview : Lesson -> PreviewState -> Html Msg
@@ -334,8 +422,8 @@ lessonItemView ld =
 outlineView : Outline -> Html Msg
 outlineView ol =
     case ol of
-        Chapter name subChapters ->
-            div [] [ a [] [ text name ], ul [] <| List.map outlineView subChapters ]
+        Chapter { title } subChapters ->
+            div [] [ a [onClick <| GotoChapter title] [ text title ], ul [] <| List.map outlineView subChapters ]
 
         Lesson { title, id } ->
             li [ onClick <| GotoLesson id ] [ a [] [ text title ] ]

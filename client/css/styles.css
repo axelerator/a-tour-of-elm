@@ -57,6 +57,7 @@ nav .outline  li {
   left: 0;
   width: 50%;
   overflow: hidden;
+  padding: 1em;
 }
 .lessonContainer .right {
   position: absolute;
