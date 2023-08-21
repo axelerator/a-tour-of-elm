@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,6 +35,15 @@
     }
     app.ports.restored.send(content);
   });
+  app.ports.forceTheme.subscribe(function(data) {
+    localStorage.setItem('theme', data);
+    document.querySelector('html').setAttribute("data-theme", data);
+  })
+  let theme = localStorage.getItem('theme');
+  if (theme) {
+    document.querySelector('html').setAttribute("data-theme", theme);
+  }
+
 
   </script>
 </body>

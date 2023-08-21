@@ -1,5 +1,5 @@
 .editor {
-  font-family: monospace;
+  font-ftheme: monospace;
 }
 
 nav {
@@ -58,6 +58,7 @@ nav .outline  li {
   width: 50%;
   overflow-y: scroll;
   padding: 1em;
+  overflow-x: hidden;
 }
 .lessonContainer .right {
   position: absolute;

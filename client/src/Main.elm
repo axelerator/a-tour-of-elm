@@ -32,6 +32,12 @@ port restored : (List String -> msg) -> Sub msg
 
 port readyForPreview : (String -> msg) -> Sub msg
 
+port forceTheme : String -> Cmd msg
+
+type Theme 
+  = ForceDark
+  | ForceLight
+
 
 lessonDescriptions : List LessonDescription
 lessonDescriptions =
@@ -116,6 +122,7 @@ type alias Model =
     , drag : Draggable.State DraggableId
     , beingDragged : Maybe DraggableId
     , showOutline : Bool
+    , theme : Theme
     }
 
 
@@ -133,6 +140,7 @@ init _ =
       , drag = Draggable.init
       , beingDragged = Nothing
       , showOutline = False
+      , theme = ForceDark
       }
     , Task.perform GotViewPort getViewport
     )
@@ -151,6 +159,7 @@ type Msg
     | DragMsg (Draggable.Msg DraggableId)
     | ToggleOutline
     | Compiled String (Result Http.Error CompileResponse)
+    | ToggleTheme
 
 
 dragConfig : Draggable.Config DraggableId Msg
@@ -261,6 +270,17 @@ update msg model =
         ( ShowPreview hash, _ ) ->
             ( { model | previewState = Loaded hash }
             , Cmd.none
+            )
+
+        ( ToggleTheme, _ ) ->
+          let
+              (theme, themeStr) = 
+                case model.theme of
+                  ForceDark -> (ForceLight, "light")
+                  ForceLight -> (ForceDark, "dark")
+          in
+            ( { model | theme = theme  }
+            , forceTheme themeStr
             )
 
         ( GotRestoredContent contents, CurrentLesson current ) ->
@@ -378,6 +398,7 @@ view model =
                         List.map outlineView outline
                     ]
                 ]
+            , ul [] [li [onClick ToggleTheme] [text "theme"]]
             ]
         , case model.currentLesson of
             CurrentLesson { lesson, description } ->
