@@ -48,7 +48,7 @@ So, let's dive in, have fun, and explore the amazing possibilities of web develo
 
 htmlChapterContent : ChapterContent
 htmlChapterContent =
-    { title = "What is HTML?"
+    { title = "Intro to HTML"
     , body = """
 Welcome to Chapter 1, where we dive into the essentials of displaying content
 through HTML. 
@@ -77,8 +77,15 @@ so the browser is able to display it.
 
 cssChapterContent : ChapterContent
 cssChapterContent =
-    { title = "What is CSS?"
-    , body = "Hi there!"
+    { title = "Intro to CSS"
+    , body = """CSS stands for _Cascading Style Sheets_. 
+
+But all you really have to remember is the _Style_ that it'll bring to your documents.
+Where `HTML` is all about **what** is displayed `CSS` allows you to customize **how** it's displayed.
+
+Similar to HTML it's not a _full_ programming language because it too can't _do_ things. It's a way
+of expressing a list rules about how to display certain elements of your document.
+"""
     }
 
 

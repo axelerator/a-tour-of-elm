@@ -5,49 +5,39 @@ import Lesson exposing (FileType(..), LessonId(..))
 
 lessonDescription =
     { id = CSSIntroId
-    , title = "Hello CSS"
+    , title = "Inline Styles"
     , body = body
-    , lessonFiles = [ indexHtml, stylesCss ]
+    , lessonFiles = [ indexHtml ]
     }
 
 
 body =
-    """**some** markdown
+    """# Very stylish!
 
-  - oh
-  - yeah
+To modify how our HTML elements are displayed we can use their `style` attribute.
+In the _value_ (the part after the `=`) we can list **CSS properties**.
+
+These properties like `color` and `font size` will then affect how that element is displayed.
+
+### Exercise
+
+Look at other properties like [font-size](https://developer.mozilla.org/en-US/docs/Web/CSS/font-size) or [border](https://developer.mozilla.org/en-US/docs/Web/CSS/border) 
+and apply them to the existing elements on the right (or add new ones) to change their visual appearance.
   """
 
 
 indexHtml =
     { filename = "index.html"
     , filetype = HtmlFile
-    , content = htmlIntroIndexHtml
+    , content = html
     }
 
 
-stylesCss =
-    { filename = "styles.css"
-    , filetype = CSSFile
-    , content = stylesCSS
-    }
-
-
-htmlIntroIndexHtml =
+html =
     """<!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" href="styles.css">
-  </head>
   <body>
-    <h1>I am a red heading</h1>
-    <p>I am a yellow paragraph</p>
+    <h1 style="color: red">I am a red heading</h1>
+    <p style="background-color: yellow; text-decoration: underline">I am a yellow paragraph</p>
   </body>
 </html>"""
-
-
-stylesCSS =
-    """
-h1 { color: red; }
-p { background-color: yellow; }
-"""
