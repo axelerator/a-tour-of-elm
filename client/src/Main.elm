@@ -1,4 +1,5 @@
 port module Main exposing (main)
+import Lesson exposing (LessonDescription)
 
 import Browser
 import Browser.Dom exposing (getViewport)
@@ -14,6 +15,7 @@ import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, Les
 import Lessons.CSSIntro as CSSIntro
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlIntro as HtmlIntro
+import Lessons.HtmlAttributes as HtmlAttributes
 import Markdown
 import SHA1
 import String exposing (fromInt)
@@ -41,10 +43,14 @@ type Theme
 
 lessonDescriptions : List LessonDescription
 lessonDescriptions =
-    [ HtmlIntro.lessonDescription
-    , CSSIntro.lessonDescription
-    , ElmIntro.lessonDescription
-    ]
+  let
+      sum ol lds =
+        case ol of
+            Lesson ld -> ld::lds
+            Chapter _ subOLs ->
+              List.foldr sum lds subOLs
+  in
+    List.foldr sum [] outline
 
 
 
@@ -59,7 +65,10 @@ type Outline
 outline : List Outline
 outline =
     [ Chapter Chapters.welcome []
-    , Chapter Chapters.htmlChapterContent [ Lesson HtmlIntro.lessonDescription ]
+    , Chapter Chapters.htmlChapterContent 
+      [ Lesson HtmlIntro.lessonDescription
+      , Lesson HtmlAttributes.lesson
+      ]
     , Chapter Chapters.cssChapterContent [ Lesson CSSIntro.lessonDescription ]
     , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]
     ]
@@ -174,7 +183,7 @@ lessonDescriptionById : LessonId -> LessonDescription
 lessonDescriptionById target =
     Maybe.withDefault HtmlIntro.lessonDescription <|
         List.head <|
-            List.filter (.id >> (==) target) lessonDescriptions
+            Debug.log "lesson" <| List.filter (.id >> (==) target) lessonDescriptions
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

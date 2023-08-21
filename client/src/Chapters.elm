@@ -1,4 +1,25 @@
 module Chapters exposing (..)
+{-
+
+  - Welcome
+    - HTML
+      - Tags & Elements
+      - Attributes
+      - Links & Images
+    - CSS
+      - Inline styles
+      - Rules & Selectors
+      - External Stylesheets
+    - JavaScript
+      - Variables and Statements
+      - Functions
+      - Interactivity
+    - Elm
+      - Hello world
+      - values & functions
+      - Data & Presentation (model + view , just a local model variable with a static value)
+      - Interactivity ( color slider)
+-}
 
 type alias ChapterContent =
     { title : String

@@ -5,7 +5,7 @@ import Lesson exposing (FileType(..), LessonId(..))
 
 lessonDescription =
     { id = HtmlIntroId
-    , title = "Tags"
+    , title = "Tags & Elements"
     , body = body
     , lessonFiles = [ indexHtml ]
     }
@@ -37,7 +37,7 @@ The `p` with it surrounding pointy brackets are called tags. So an element is co
 
 - an _opening_ tag (`<p>`)
 - it content (here the text `some text`)
-- and a closing tag (`</p>` - note the extra slash)
+- and a _closing_ tag (`</p>` - note the extra slash `/`)
 
 ## Trees and the DOM
 

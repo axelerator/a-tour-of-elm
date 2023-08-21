@@ -23,6 +23,7 @@ nav .outline.visible {
 nav .outline ul, nav .outline p, nav .outline  li {
   margin: 0;
   padding: 0;
+  display: block;
 }
 
 a {

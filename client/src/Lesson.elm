@@ -24,6 +24,7 @@ type alias LessonFile =
 
 type LessonId
     = HtmlIntroId
+    | HtmlAttributesId
     | CSSIntroId
     | ElmIntroId
 
@@ -43,3 +44,6 @@ lessonIdStr id =
 
         ElmIntroId ->
             "ElmIntro"
+
+        HtmlAttributesId ->
+            "HtmlAttributesId"
