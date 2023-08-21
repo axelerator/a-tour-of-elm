@@ -18,6 +18,7 @@ import Markdown
 import SHA1
 import String exposing (fromInt)
 import Task
+import Chapters exposing (ChapterContent)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -40,51 +41,21 @@ lessonDescriptions =
     ]
 
 
-type alias ChapterContent =
-    { title : String
-    , body : String
-    }
-
 
 type Outline
     = Chapter ChapterContent (List Outline)
     | Lesson LessonDescription
 
 
-welcome : ChapterContent
-welcome =
-    { title = "Welcome"
-    , body = "Hi there!"
-    }
 
-
-htmlChapterContent : ChapterContent
-htmlChapterContent =
-    { title = "What is HTML?"
-    , body = "Hi there!"
-    }
-
-
-cssChapterContent : ChapterContent
-cssChapterContent =
-    { title = "What is CSS?"
-    , body = "Hi there!"
-    }
-
-
-elmChapterContent : ChapterContent
-elmChapterContent =
-    { title = "What is Elm?"
-    , body = "Hi there!"
-    }
 
 
 outline : List Outline
 outline =
-    [ Chapter welcome []
-    , Chapter htmlChapterContent [ Lesson HtmlIntro.lessonDescription ]
-    , Chapter cssChapterContent [ Lesson CSSIntro.lessonDescription ]
-    , Chapter elmChapterContent [ Lesson ElmIntro.lessonDescription ]
+    [ Chapter Chapters.welcome []
+    , Chapter Chapters.htmlChapterContent [ Lesson HtmlIntro.lessonDescription ]
+    , Chapter Chapters.cssChapterContent [ Lesson CSSIntro.lessonDescription ]
+    , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]
     ]
 
 
@@ -112,7 +83,7 @@ findChapter targetTitle =
             content
 
         _ ->
-            welcome
+            Chapters.welcome
 
 
 main : Program () Model Msg
@@ -155,7 +126,7 @@ type DraggableId
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { currentLesson = CurrentChapter welcome
+    ( { currentLesson = CurrentChapter Chapters.welcome
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -393,7 +364,7 @@ subscriptions model =
                 ]
 
         _ ->
-            Sub.none
+          Draggable.subscriptions DragMsg model.drag
 
 
 view : Model -> Html Msg
@@ -412,11 +383,8 @@ view model =
             CurrentLesson { lesson, description } ->
                 lessonView model.editorsHeight model.lessonWidth lesson description model.previewState
 
-            CurrentChapter { title, body } ->
-                div []
-                    [ h1 [] [ text title ]
-                    , Markdown.toHtml [ class "content" ] body
-                    ]
+            CurrentChapter c ->
+                chapterView model.editorsHeight model.lessonWidth c
         ]
 
 
@@ -424,6 +392,17 @@ px : Int -> String
 px x =
     fromInt x ++ "px"
 
+chapterView : Int -> Int -> ChapterContent -> Html Msg
+chapterView editorsHeight lessonWidth {body} =
+    div [ class "lessonContainer" ]
+        [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
+        , div [ class "left", style "width" (px lessonWidth) ] [Markdown.toHtml [ class "md-content" ] body]
+        , div [ class "right", style "left" (px (lessonWidth + 10)) ]
+            [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
+            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] []]
+            , div [ class "preview", style "top" (px <| editorsHeight + 10) ] [ text "" ]
+            ]
+        ]
 
 lessonView : Int -> Int -> Lesson -> LessonDescription -> PreviewState -> Html Msg
 lessonView editorsHeight lessonWidth lesson description previewState =
@@ -443,8 +422,7 @@ lessonView editorsHeight lessonWidth lesson description previewState =
 
 lessonContentView : LessonDescription -> List (Html Msg)
 lessonContentView { title, body } =
-    [ h1 [] [ text title ]
-    , Markdown.toHtml [ class "content" ] body
+    [ Markdown.toHtml [ class "md-content" ] body
     ]
 
 

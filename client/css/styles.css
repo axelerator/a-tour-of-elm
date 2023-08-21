@@ -56,7 +56,7 @@ nav .outline  li {
   bottom: 0;
   left: 0;
   width: 50%;
-  overflow: hidden;
+  overflow-y: scroll;
   padding: 1em;
 }
 .lessonContainer .right {
@@ -89,6 +89,10 @@ nav .outline  li {
 
 .editors {
   height: 50%;
+}
+
+.md-content h1, h2, h3, h4 {
+  margin: 0;
 }
 
 .tabs {
