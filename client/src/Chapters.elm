@@ -36,12 +36,16 @@ interactive single-page web application using Elm.
 This tutorial is your gateway to the world of programming,
 and guess what? No prior experience required!
 
-We're here to guide you every step of the way. 
-Each chapter is packed with hands-on examples that you can run, experiment 
-with, and build upon. Ever wondered how those snappy web apps work behind the 
-scenes? Elm's got the answers, and we're here to help you unlock its magic.
+Web apps get delivered to the user through the _browser_ utilizing multiple technologies.
+Most importantly `Html`, `JavaScript` and `CSS`.
 
-So, let's dive in, have fun, and explore the amazing possibilities of web development with Elm.
+There are already tons of excellent tutorials out there to learn these in depth. And developers spend
+years on mastering _each_ of those!
+
+The chapters in this tour aim to provide you ramp you up as quickly as possible, focussing only on what's
+absolutely necesseray to be able to put your Elm code into action.
+
+If you're already familiar with them feel free to skip to the Elm chapter directly.
 """
     }
 
