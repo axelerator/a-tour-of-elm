@@ -33,7 +33,9 @@ Here is an example of an `URL` that points to an image in the official Elm
 guide. If you copy it into the address bar of a new tab of your browser, it
 will recognize that it's an image and display it to you.
 
-``` https://guide.elm-lang.org/architecture/buttons.svg ```
+``` 
+https://guide.elm-lang.org/architecture/buttons.svg 
+```
 
 On the right you find a document that only contains an `<img />` element. It's
 also a _self-closing_ element as it can't contain other elements.

@@ -27,11 +27,17 @@ content.
 
 One example is the `<input>` tag. So **instead** of writing:
 
-```html <input></input> ```
+```html 
+<input></input> 
+```
 
 We can use the following shorter version, that has the exact same meaning:
 
-```html <input /> ``` Note the slash `/` at the _end_ of the tag.
+```html 
+<input />
+```
+
+Note the slash `/` at the _end_ of the tag.
 
 ### Attributes
 

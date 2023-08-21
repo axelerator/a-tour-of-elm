@@ -19,6 +19,8 @@ import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlAttributes as HtmlAttributes
 import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
+import Lessons.JSIntro as JSIntro
+import Lessons.JSFunctions as JSFunctions
 import Markdown
 import SHA1
 import String exposing (fromInt)
@@ -77,6 +79,10 @@ outline =
       [ Lesson CSSIntro.lessonDescription 
       , Lesson CSSRules.lesson
       , Lesson CSSInclude.lesson
+      ]
+    , Chapter Chapters.jsChapterContent 
+      [ Lesson JSIntro.lesson
+      , Lesson JSFunctions.lesson
       ]
     , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]
     ]

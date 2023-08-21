@@ -12,6 +12,7 @@ type alias LessonDescription =
 type FileType
     = HtmlFile
     | CSSFile
+    | JSFile
     | ElmFile
 
 
@@ -29,6 +30,8 @@ type LessonId
     | CSSIntroId
     | CSSRulesId
     | CSSIncludeId
+    | JSIntroId
+    | JSFunctionsId
     | ElmIntroId
 
 
@@ -50,6 +53,12 @@ lessonIdStr id =
 
         CSSIncludeId ->
             "CSSInclude"
+
+        JSIntroId ->
+            "JSIntro"
+
+        JSFunctionsId ->
+            "JSFunctions"
 
         ElmIntroId ->
             "ElmIntro"

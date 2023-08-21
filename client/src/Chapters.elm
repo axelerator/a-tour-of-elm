@@ -20,6 +20,7 @@ module Chapters exposing (..)
       - Data & Presentation (model + view , just a local model variable with a static value)
       - Interactivity ( color slider)
 -}
+import Debug exposing (todo)
 
 type alias ChapterContent =
     { title : String
@@ -40,12 +41,12 @@ Web apps get delivered to the user through the _browser_ utilizing multiple tech
 Most importantly `Html`, `JavaScript` and `CSS`.
 
 There are already tons of excellent tutorials out there to learn these in depth. And developers spend
-years on mastering _each_ of those!
+years on mastering _each_ of those! 🥵
 
 The chapters in this tour aim to provide you ramp you up as quickly as possible, focussing only on what's
 absolutely necesseray to be able to put your Elm code into action.
 
-If you're already familiar with them feel free to skip to the Elm chapter directly.
+If you're already familiar with them feel free to skip to the Elm chapter directly. 🚀
 """
     }
 
@@ -92,6 +93,27 @@ of expressing a list rules about how to display certain elements of your documen
 """
     }
 
+jsChapterContent : ChapterContent
+jsChapterContent =
+    { title = "Intro to JavaScript"
+    , body = """While `HTML` and `CSS` only described what we want the browser to display JavaScript can be used
+to tell the browser **what to do**. Specifically we can use it to user various data sources (user input or APIs) to
+**modify** the document we're currently looking at!
+
+That's what makes it a full programming language! Mastering JavaScript takes a long time and comes with a lot of pitfalls.
+It is nearly 30 years old! 
+
+A lot of convenience has been added over the years, but because browsers still have to be able to run JavaScript has to 
+continue to support some constructs that are very hard to master.
+
+This is where Elm steps onto the stage! The way we write Elm is completely different from JavaScript. However to be able
+to run our Elm programs in the browser we need to "translate" them to JavaScript. Luckily the main tool in 
+elm development - the _Elm compiler_ - does this (and more) for us.
+
+But since we're _replacing_ the JavaScript part of our technology stack it's good to understand some very minimal basics
+of how JavaScript interacts with the HTML in our browser.
+"""
+    }
 
 elmChapterContent : ChapterContent
 elmChapterContent =
