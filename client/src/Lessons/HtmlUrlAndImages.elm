@@ -51,8 +51,7 @@ In the `src` attribute we specify the `URL` from where to load the image.
 
 
 html =
-    """
-<html>
+    """<html>
   <body>
     <img src="https://guide.elm-lang.org/architecture/buttons.svg" />
   </body>

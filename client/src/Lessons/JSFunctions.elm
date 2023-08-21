@@ -57,8 +57,7 @@ let fruit = "melon"
 
 
 html =
-    """
-<html>
+    """<html>
   <head> 
     <script src="my-functions.js"></script>
     <script>

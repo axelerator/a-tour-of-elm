@@ -63,8 +63,7 @@ Here is an image showing how the nested elements can be thought of as "branches"
 
 
 htmlIntroIndexHtml =
-    """
-<html>
+    """<html>
   <body>
     <h1>I am a heading!</h1>
     <p>I am a paragraph</p>

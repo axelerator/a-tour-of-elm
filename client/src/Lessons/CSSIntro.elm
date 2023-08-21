@@ -34,8 +34,7 @@ indexHtml =
 
 
 html =
-    """<!DOCTYPE html>
-<html>
+    """<html>
   <body>
     <h1 style="color: red">I am a red heading</h1>
     <p style="background-color: yellow; text-decoration: underline">I am a yellow paragraph</p>

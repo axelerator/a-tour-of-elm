@@ -61,8 +61,7 @@ documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#i
 
 
 html =
-    """
-<html>
+    """<html>
   <body>
     <input type="text" />
   </body>

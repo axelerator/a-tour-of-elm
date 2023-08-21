@@ -76,8 +76,7 @@ What happens if you link both stylesheets?
 
 
 htmlIntroIndexHtml =
-    """<!DOCTYPE html>
-<html>
+    """<html>
   <head>
     <link rel="stylesheet" href="styles.css">
   </head>
