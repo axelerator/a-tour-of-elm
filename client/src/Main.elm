@@ -13,6 +13,8 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSIntro as CSSIntro
+import Lessons.CSSRules as CSSRules
+import Lessons.CSSInclude as CSSInclude
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlAttributes as HtmlAttributes
@@ -71,7 +73,11 @@ outline =
       , Lesson HtmlAttributes.lesson
       , Lesson HtmlUrlAndImages.lesson
       ]
-    , Chapter Chapters.cssChapterContent [ Lesson CSSIntro.lessonDescription ]
+    , Chapter Chapters.cssChapterContent 
+      [ Lesson CSSIntro.lessonDescription 
+      , Lesson CSSRules.lesson
+      , Lesson CSSInclude.lesson
+      ]
     , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]
     ]
 

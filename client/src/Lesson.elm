@@ -27,6 +27,8 @@ type LessonId
     | HtmlAttributesId
     | HtmlUrlAndImagesId
     | CSSIntroId
+    | CSSRulesId
+    | CSSIncludeId
     | ElmIntroId
 
 
@@ -42,6 +44,12 @@ lessonIdStr id =
 
         CSSIntroId ->
             "CSSIntro"
+
+        CSSRulesId ->
+            "CSSRules"
+
+        CSSIncludeId ->
+            "CSSInclude"
 
         ElmIntroId ->
             "ElmIntro"
