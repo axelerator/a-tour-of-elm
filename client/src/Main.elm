@@ -16,6 +16,7 @@ import Lessons.CSSIntro as CSSIntro
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlAttributes as HtmlAttributes
+import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
 import Markdown
 import SHA1
 import String exposing (fromInt)
@@ -68,6 +69,7 @@ outline =
     , Chapter Chapters.htmlChapterContent 
       [ Lesson HtmlIntro.lessonDescription
       , Lesson HtmlAttributes.lesson
+      , Lesson HtmlUrlAndImages.lesson
       ]
     , Chapter Chapters.cssChapterContent [ Lesson CSSIntro.lessonDescription ]
     , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]

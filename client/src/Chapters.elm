@@ -5,7 +5,7 @@ module Chapters exposing (..)
     - HTML
       - Tags & Elements
       - Attributes
-      - Links & Images
+      - URLs & Images
     - CSS
       - Inline styles
       - Rules & Selectors
