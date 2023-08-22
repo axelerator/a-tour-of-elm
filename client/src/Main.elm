@@ -1,8 +1,8 @@
 port module Main exposing (main)
-import Lesson exposing (LessonDescription)
 
 import Browser
 import Browser.Dom exposing (getViewport)
+import Chapters exposing (ChapterContent)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, a, button, code, div, h1, iframe, input, label, li, nav, p, pre, span, text, textarea, ul)
@@ -12,20 +12,21 @@ import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
+import Lessons.CSSInclude as CSSInclude
 import Lessons.CSSIntro as CSSIntro
 import Lessons.CSSRules as CSSRules
-import Lessons.CSSInclude as CSSInclude
 import Lessons.ElmIntro as ElmIntro
-import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlAttributes as HtmlAttributes
+import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
-import Lessons.JSIntro as JSIntro
 import Lessons.JSFunctions as JSFunctions
+import Lessons.JSIntro as JSIntro
 import Markdown
+import Phosphor exposing (IconWeight(..))
 import SHA1
 import String exposing (fromInt)
 import Task
-import Chapters exposing (ChapterContent)
+import Phosphor exposing (toHtml)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -39,24 +40,27 @@ port restored : (List String -> msg) -> Sub msg
 
 port readyForPreview : (String -> msg) -> Sub msg
 
+
 port forceTheme : String -> Cmd msg
 
-type Theme 
-  = ForceDark
-  | ForceLight
+
+type Theme
+    = ForceDark
+    | ForceLight
 
 
 lessonDescriptions : List LessonDescription
 lessonDescriptions =
-  let
-      sum ol lds =
-        case ol of
-            Lesson ld -> ld::lds
-            Chapter _ subOLs ->
-              List.foldr sum lds subOLs
-  in
-    List.foldr sum [] outline
+    let
+        sum ol lds =
+            case ol of
+                Lesson ld ->
+                    ld :: lds
 
+                Chapter _ subOLs ->
+                    List.foldr sum lds subOLs
+    in
+    List.foldr sum [] outline
 
 
 type Outline
@@ -64,26 +68,23 @@ type Outline
     | Lesson LessonDescription
 
 
-
-
-
 outline : List Outline
 outline =
     [ Chapter Chapters.welcome []
-    , Chapter Chapters.htmlChapterContent 
-      [ Lesson HtmlIntro.lessonDescription
-      , Lesson HtmlAttributes.lesson
-      , Lesson HtmlUrlAndImages.lesson
-      ]
-    , Chapter Chapters.cssChapterContent 
-      [ Lesson CSSIntro.lessonDescription 
-      , Lesson CSSRules.lesson
-      , Lesson CSSInclude.lesson
-      ]
-    , Chapter Chapters.jsChapterContent 
-      [ Lesson JSIntro.lesson
-      , Lesson JSFunctions.lesson
-      ]
+    , Chapter Chapters.htmlChapterContent
+        [ Lesson HtmlIntro.lessonDescription
+        , Lesson HtmlAttributes.lesson
+        , Lesson HtmlUrlAndImages.lesson
+        ]
+    , Chapter Chapters.cssChapterContent
+        [ Lesson CSSIntro.lessonDescription
+        , Lesson CSSRules.lesson
+        , Lesson CSSInclude.lesson
+        ]
+    , Chapter Chapters.jsChapterContent
+        [ Lesson JSIntro.lesson
+        , Lesson JSFunctions.lesson
+        ]
     , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]
     ]
 
@@ -197,7 +198,8 @@ lessonDescriptionById : LessonId -> LessonDescription
 lessonDescriptionById target =
     Maybe.withDefault HtmlIntro.lessonDescription <|
         List.head <|
-            Debug.log "lesson" <| List.filter (.id >> (==) target) lessonDescriptions
+            Debug.log "lesson" <|
+                List.filter (.id >> (==) target) lessonDescriptions
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -296,13 +298,16 @@ update msg model =
             )
 
         ( ToggleTheme, _ ) ->
-          let
-              (theme, themeStr) = 
-                case model.theme of
-                  ForceDark -> (ForceLight, "light")
-                  ForceLight -> (ForceDark, "dark")
-          in
-            ( { model | theme = theme  }
+            let
+                ( theme, themeStr ) =
+                    case model.theme of
+                        ForceDark ->
+                            ( ForceLight, "light" )
+
+                        ForceLight ->
+                            ( ForceDark, "dark" )
+            in
+            ( { model | theme = theme }
             , forceTheme themeStr
             )
 
@@ -407,21 +412,28 @@ subscriptions model =
                 ]
 
         _ ->
-          Draggable.subscriptions DragMsg model.drag
+            Draggable.subscriptions DragMsg model.drag
 
+themeIcon theme =
+  case theme of
+      ForceDark -> Phosphor.sun
+      ForceLight -> Phosphor.moon
 
 view : Model -> Html Msg
 view model =
     div []
-        [ nav []
+        [ nav [class "container-fluid"]
             [ ul []
                 [ li []
-                    [ span [ onClick ToggleOutline ] [ text "Lessons" ]
+                    [ span [ onClick ToggleOutline ] [ Phosphor.list Bold |> toHtml []]
                     , div [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
                         List.map outlineView outline
                     ]
                 ]
-            , ul [] [li [onClick ToggleTheme] [text "theme"]]
+            , ul [] [ li [ onClick ToggleTheme ] 
+              [ 
+                (themeIcon model.theme) Regular |> toHtml [] ] 
+              ]
             ]
         , case model.currentLesson of
             CurrentLesson { lesson, description } ->
@@ -436,17 +448,19 @@ px : Int -> String
 px x =
     fromInt x ++ "px"
 
+
 chapterView : Int -> Int -> ChapterContent -> Html Msg
-chapterView editorsHeight lessonWidth {body} =
+chapterView editorsHeight lessonWidth { body } =
     div [ class "lessonContainer" ]
         [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
-        , div [ class "left", style "width" (px lessonWidth) ] [Markdown.toHtml [ class "md-content" ] body]
+        , div [ class "left", style "width" (px lessonWidth) ] [ Markdown.toHtml [ class "md-content" ] body ]
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
-            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] []]
+            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] [] ]
             , div [ class "preview", style "top" (px <| editorsHeight + 10) ] [ text "" ]
             ]
         ]
+
 
 lessonView : Int -> Int -> Lesson -> LessonDescription -> PreviewState -> Html Msg
 lessonView editorsHeight lessonWidth lesson description previewState =

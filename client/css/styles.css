@@ -6,8 +6,13 @@ nav {
   border-bottom: 1px solid var(--dropdown-border-color);
 }
 
+nav li {
+  cursor: pointer;
+}
+
 nav .outline {
   position: absolute;
+  left: calc(var(--nav-element-spacing-horizontal) * -1);
   top: 3.5em;
   padding: 1em;
   transform: translate(-100%, 0);
