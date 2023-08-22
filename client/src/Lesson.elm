@@ -24,14 +24,19 @@ type alias LessonFile =
 
 
 type LessonId
-    = HtmlIntroId
+    = WelcomeId
+    | HtmlId
+    | HtmlIntroId
     | HtmlAttributesId
     | HtmlUrlAndImagesId
+    | CSSId
     | CSSIntroId
     | CSSRulesId
     | CSSIncludeId
+    | JSId
     | JSIntroId
     | JSFunctionsId
+    | ElmId
     | ElmIntroId
 
 
@@ -68,3 +73,18 @@ lessonIdStr id =
 
         HtmlUrlAndImagesId ->
             "HtmlAttributesId"
+
+        WelcomeId ->
+            "WelcomeId"
+
+        HtmlId ->
+            "HtmlId"
+
+        CSSId ->
+            "CSSId"
+
+        JSId ->
+            "JSId"
+
+        ElmId ->
+            "ElmId"

@@ -2,7 +2,7 @@ port module Main exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)
-import Chapters exposing (ChapterContent)
+import Chapters
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, a, button, code, div, h1, iframe, input, label, li, nav, p, pre, span, text, textarea, ul)
@@ -13,7 +13,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSInclude as CSSInclude
-import Lessons.CSSIntro as CSSIntro
+import Lessons.CSSIntro as CSSIntro exposing (lessonDescription)
 import Lessons.CSSRules as CSSRules
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlAttributes as HtmlAttributes
@@ -22,11 +22,10 @@ import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
 import Lessons.JSFunctions as JSFunctions
 import Lessons.JSIntro as JSIntro
 import Markdown
-import Phosphor exposing (IconWeight(..))
+import Phosphor exposing (IconWeight(..), toHtml)
 import SHA1
 import String exposing (fromInt)
 import Task
-import Phosphor exposing (toHtml)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -54,66 +53,37 @@ lessonDescriptions =
     let
         sum ol lds =
             case ol of
-                Lesson ld ->
-                    ld :: lds
-
-                Chapter _ subOLs ->
-                    List.foldr sum lds subOLs
+                Chapter ld subOLs ->
+                    List.foldr sum (ld :: lds) subOLs
     in
     List.foldr sum [] outline
 
 
 type Outline
-    = Chapter ChapterContent (List Outline)
-    | Lesson LessonDescription
+    = Chapter LessonDescription (List Outline)
 
 
 outline : List Outline
 outline =
     [ Chapter Chapters.welcome []
-    , Chapter Chapters.htmlChapterContent
-        [ Lesson HtmlIntro.lessonDescription
-        , Lesson HtmlAttributes.lesson
-        , Lesson HtmlUrlAndImages.lesson
+    , Chapter Chapters.html
+        [ Chapter HtmlIntro.lessonDescription []
+        , Chapter HtmlAttributes.lesson []
+        , Chapter HtmlUrlAndImages.lesson []
         ]
-    , Chapter Chapters.cssChapterContent
-        [ Lesson CSSIntro.lessonDescription
-        , Lesson CSSRules.lesson
-        , Lesson CSSInclude.lesson
+    , Chapter Chapters.css
+        [ Chapter CSSIntro.lessonDescription []
+        , Chapter CSSRules.lesson []
+        , Chapter CSSInclude.lesson []
         ]
-    , Chapter Chapters.jsChapterContent
-        [ Lesson JSIntro.lesson
-        , Lesson JSFunctions.lesson
+    , Chapter Chapters.js
+        [ Chapter JSIntro.lesson []
+        , Chapter JSFunctions.lesson []
         ]
-    , Chapter Chapters.elmChapterContent [ Lesson ElmIntro.lessonDescription ]
+    , Chapter Chapters.elm
+        [ Chapter ElmIntro.lessonDescription []
+        ]
     ]
-
-
-
--- TODO: make recursive
-
-
-findChapter : String -> ChapterContent
-findChapter targetTitle =
-    let
-        chapterWithTitle : Outline -> Bool
-        chapterWithTitle o =
-            case o of
-                Chapter { title } _ ->
-                    title == targetTitle
-
-                _ ->
-                    False
-
-        result =
-            List.head <| List.filter chapterWithTitle outline
-    in
-    case result of
-        Just (Chapter content _) ->
-            content
-
-        _ ->
-            Chapters.welcome
 
 
 main : Program () Model Msg
@@ -133,13 +103,8 @@ type PreviewState
     | Failed String
 
 
-type CurrentPage
-    = CurrentLesson { lesson : List LessonFile, description : LessonDescription }
-    | CurrentChapter ChapterContent
-
-
 type alias Model =
-    { currentLesson : CurrentPage
+    { currentLesson : { lesson : List LessonFile, description : LessonDescription }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -157,7 +122,7 @@ type DraggableId
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { currentLesson = CurrentChapter Chapters.welcome
+    ( { currentLesson = { description = Chapters.welcome, lesson = [] }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -172,7 +137,6 @@ init _ =
 
 type Msg
     = GotoLesson LessonId
-    | GotoChapter String
     | ChangeEditor Int String
     | GotRestoredContent (List String)
     | ShowPreview String
@@ -247,29 +211,20 @@ update msg model =
                     lessonDescriptionById id
             in
             ( { model
-                | currentLesson = CurrentLesson { lesson = description.lessonFiles, description = description }
+                | currentLesson = { lesson = description.lessonFiles, description = description }
                 , previewState = NoPreview
                 , showOutline = False
               }
             , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lessonFiles )
             )
 
-        ( GotoChapter title, _ ) ->
-            ( { model
-                | currentLesson = CurrentChapter (findChapter title)
-                , previewState = NoPreview
-                , showOutline = False
-              }
-            , Cmd.none
-            )
-
-        ( RunCurrentLesson, CurrentLesson { lesson } ) ->
+        ( RunCurrentLesson, { lesson } ) ->
             ( { model | previewState = Loading }
             , compile <| filesForRunning lesson
             )
 
-        ( ChangeEditor pos value, CurrentLesson current ) ->
-            ( { model | currentLesson = CurrentLesson { current | lesson = updateEditor current.lesson pos value } }
+        ( ChangeEditor pos value, current ) ->
+            ( { model | currentLesson = { current | lesson = updateEditor current.lesson pos value } }
             , store ( lessonIdStr current.description.id, String.fromInt pos, value )
             )
 
@@ -311,7 +266,7 @@ update msg model =
             , forceTheme themeStr
             )
 
-        ( GotRestoredContent contents, CurrentLesson current ) ->
+        ( GotRestoredContent contents, current ) ->
             let
                 indexedContents =
                     List.indexedMap (\i c -> ( i, c )) contents
@@ -322,12 +277,7 @@ update msg model =
                 restoredEditors =
                     List.foldr f current.lesson indexedContents
             in
-            ( { model | currentLesson = CurrentLesson <| { current | lesson = restoredEditors } }
-            , Cmd.none
-            )
-
-        _ ->
-            ( model
+            ( { model | currentLesson = { current | lesson = restoredEditors } }
             , Cmd.none
             )
 
@@ -399,48 +349,49 @@ updateEditor files pos value =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.currentLesson of
-        CurrentLesson _ ->
-            Sub.batch
-                [ Draggable.subscriptions DragMsg model.drag
-                , case model.previewState of
-                    Loading ->
-                        readyForPreview ShowPreview
+    Sub.batch
+        [ Draggable.subscriptions DragMsg model.drag
+        , case model.previewState of
+            Loading ->
+                readyForPreview ShowPreview
 
-                    _ ->
-                        restored GotRestoredContent
-                ]
+            _ ->
+                restored GotRestoredContent
+        ]
 
-        _ ->
-            Draggable.subscriptions DragMsg model.drag
 
 themeIcon theme =
-  case theme of
-      ForceDark -> Phosphor.sun
-      ForceLight -> Phosphor.moon
+    case theme of
+        ForceDark ->
+            Phosphor.sun
+
+        ForceLight ->
+            Phosphor.moon
+
 
 view : Model -> Html Msg
 view model =
     div []
-        [ nav [class "container-fluid"]
+        [ nav [ class "container-fluid" ]
             [ ul []
                 [ li []
-                    [ span [ onClick ToggleOutline ] [ Phosphor.list Bold |> toHtml []]
-                    , div [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
+                    [ span [ onClick ToggleOutline ] [ Phosphor.list Bold |> toHtml [] ]
+                    , ul [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
                         List.map outlineView outline
                     ]
                 ]
-            , ul [] [ li [ onClick ToggleTheme ] 
-              [ 
-                (themeIcon model.theme) Regular |> toHtml [] ] 
-              ]
+            , ul [] [ li [] [ text "A tour of Elm" ] ]
+            , ul []
+                [ li [ onClick ToggleTheme ]
+                    [ themeIcon model.theme Regular |> toHtml []
+                    ]
+                ]
             ]
-        , case model.currentLesson of
-            CurrentLesson { lesson, description } ->
-                lessonView model.editorsHeight model.lessonWidth lesson description model.previewState
+        , if List.isEmpty model.currentLesson.lesson then
+            chapterView model.editorsHeight model.lessonWidth model.currentLesson.description
 
-            CurrentChapter c ->
-                chapterView model.editorsHeight model.lessonWidth c
+          else
+            lessonView model.editorsHeight model.lessonWidth model.currentLesson.lesson model.currentLesson.description model.previewState
         ]
 
 
@@ -449,7 +400,7 @@ px x =
     fromInt x ++ "px"
 
 
-chapterView : Int -> Int -> ChapterContent -> Html Msg
+chapterView : Int -> Int -> LessonDescription -> Html Msg
 chapterView editorsHeight lessonWidth { body } =
     div [ class "lessonContainer" ]
         [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
@@ -528,10 +479,13 @@ lessonItemView ld =
 
 
 outlineView : Outline -> Html Msg
-outlineView ol =
-    case ol of
-        Chapter { title } subChapters ->
-            div [] [ a [ onClick <| GotoChapter title ] [ text title ], ul [] <| List.map outlineView subChapters ]
+outlineView (Chapter { id, title } subChapters) =
+    let
+        chapterLink =
+            a [ onClick <| GotoLesson id ] [ text title ]
+    in
+    if List.isEmpty subChapters then
+        li [] [ chapterLink ]
 
-        Lesson { title, id } ->
-            li [ onClick <| GotoLesson id ] [ a [] [ text title ] ]
+    else
+        li [] [ chapterLink, ul [] <| List.map outlineView subChapters ]

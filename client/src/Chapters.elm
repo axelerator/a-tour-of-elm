@@ -1,35 +1,36 @@
 module Chapters exposing (..)
+
+import Lesson exposing (LessonDescription, LessonId(..))
+
+
+
 {-
 
-  - Welcome
-    - HTML
-      - Tags & Elements
-      - Attributes
-      - URLs & Images
-    - CSS
-      - Inline styles
-      - Rules & Selectors
-      - External Stylesheets
-    - JavaScript
-      - Variables and Statements
-      - Functions
-      - Interactivity
-    - Elm
-      - Hello world
-      - values & functions
-      - Data & Presentation (model + view , just a local model variable with a static value)
-      - Interactivity ( color slider)
+   - Welcome
+     - HTML
+       - Tags & Elements
+       - Attributes
+       - URLs & Images
+     - CSS
+       - Inline styles
+       - Rules & Selectors
+       - External Stylesheets
+     - JavaScript
+       - Variables and Statements
+       - Functions
+       - Interactivity
+     - Elm
+       - Hello world
+       - values & functions
+       - Data & Presentation (model + view , just a local model variable with a static value)
+       - Interactivity ( color slider)
 -}
-import Debug exposing (todo)
 
-type alias ChapterContent =
-    { title : String
-    , body : String
-    }
 
-welcome : ChapterContent
+welcome : LessonDescription
 welcome =
-    { title = "Welcome"
+    { id = WelcomeId
+    , title = "Welcome"
     , body = """# Hi there 👋
 
 Get ready to embark on an exciting journey from zero to creating your own 
@@ -48,12 +49,14 @@ absolutely necesseray to be able to put your Elm code into action.
 
 If you're already familiar with them feel free to skip to the Elm chapter directly. 🚀
 """
+    , lessonFiles = []
     }
 
 
-htmlChapterContent : ChapterContent
-htmlChapterContent =
-    { title = "Intro to HTML"
+html : LessonDescription
+html =
+    { id = HtmlId
+    , title = "Intro to HTML"
     , body = """
 Welcome to Chapter 1, where we dive into the essentials of displaying content
 through HTML. 
@@ -77,12 +80,14 @@ For example you can't use HTML to calculate things.
 In the upcoming lessons we're going to learn the basics of how to write a HTML document by hand
 so the browser is able to display it.
 """
+    , lessonFiles = []
     }
 
 
-cssChapterContent : ChapterContent
-cssChapterContent =
-    { title = "Intro to CSS"
+css : LessonDescription
+css =
+    { id = CSSId
+    , title = "Intro to CSS"
     , body = """CSS stands for _Cascading Style Sheets_. 
 
 But all you really have to remember is the _Style_ that it'll bring to your documents.
@@ -91,11 +96,14 @@ Where `HTML` is all about **what** is displayed `CSS` allows you to customize **
 Similar to HTML it's not a _full_ programming language because it too can't _do_ things. It's a way
 of expressing a list rules about how to display certain elements of your document.
 """
+    , lessonFiles = []
     }
 
-jsChapterContent : ChapterContent
-jsChapterContent =
-    { title = "Intro to JavaScript"
+
+js : LessonDescription
+js =
+    { id = JSId
+    , title = "Intro to JavaScript"
     , body = """While `HTML` and `CSS` only described what we want the browser to display JavaScript can be used
 to tell the browser **what to do**. Specifically we can use it to user various data sources (user input or APIs) to
 **modify** the document we're currently looking at!
@@ -113,11 +121,14 @@ elm development - the _Elm compiler_ - does this (and more) for us.
 But since we're _replacing_ the JavaScript part of our technology stack it's good to understand some very minimal basics
 of how JavaScript interacts with the HTML in our browser.
 """
+    , lessonFiles = []
     }
 
-elmChapterContent : ChapterContent
-elmChapterContent =
-    { title = "What is Elm?"
+
+elm : LessonDescription
+elm =
+    { id = ElmId
+    , title = "What is Elm?"
     , body = "Hi there!"
+    , lessonFiles = []
     }
-
