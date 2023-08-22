@@ -6,7 +6,7 @@ import Chapters
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Html exposing (Html, a, button, code, div, iframe, input, label, li, nav, ol, pre, span, text, textarea, ul)
-import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, type_, value)
+import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode
@@ -26,7 +26,7 @@ import Phosphor as PI exposing (IconWeight(..), toHtml)
 import SHA1
 import String exposing (fromInt)
 import Task
-import Html.Attributes exposing (title)
+import Phosphor exposing (IconVariant)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -47,17 +47,6 @@ port forceTheme : String -> Cmd msg
 type Theme
     = ForceDark
     | ForceLight
-
-
-lessonDescriptions : List LessonDescription
-lessonDescriptions =
-    let
-        sum ol lds =
-            case ol of
-                Chapter ld subOLs ->
-                    List.foldr sum (ld :: lds) subOLs
-    in
-    List.foldr sum [] outlines
 
 
 type Outline
@@ -181,14 +170,6 @@ dragConfig =
         [ onDragBy OnDragBy
         , onDragStart StartDragging
         ]
-
-
-lessonDescriptionById : LessonId -> LessonDescription
-lessonDescriptionById target =
-    Maybe.withDefault HtmlIntro.lessonDescription <|
-        List.head <|
-            Debug.log "lesson" <|
-                List.filter (.id >> (==) target) lessonDescriptions
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -381,6 +362,7 @@ subscriptions model =
         ]
 
 
+themeIcon : Theme -> IconWeight -> IconVariant
 themeIcon theme =
     case theme of
         ForceDark ->
@@ -417,6 +399,7 @@ px x =
     fromInt x ++ "px"
 
 
+chapterNavView : Outline -> Html Msg
 chapterNavView current =
     let
         next =
@@ -444,10 +427,12 @@ chapterNavView current =
     div [ class "chapterNav" ] [ prevLink, nextLink ]
 
 
+regularIcon : (IconWeight -> IconVariant) -> Html msg
 regularIcon i =
     i Regular |> toHtml []
 
 
+lessonView : Int -> Int -> { a | lesson : List LessonFile, outline : Outline } -> PreviewState -> Html Msg
 lessonView editorsHeight lessonWidth { lesson, outline } previewState =
     let
         (Chapter { body } _) =
