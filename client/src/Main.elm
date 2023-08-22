@@ -5,7 +5,7 @@ import Browser.Dom exposing (getViewport)
 import Chapters
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
-import Html exposing (Html, a, button, code, div, h1, iframe, input, label, li, nav, p, pre, span, text, textarea, ul)
+import Html exposing (Html, a, button, code, div, iframe, input, label, li, nav, ol, pre, span, text, textarea, ul)
 import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -13,7 +13,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
 import Lessons.CSSInclude as CSSInclude
-import Lessons.CSSIntro as CSSIntro exposing (lessonDescription)
+import Lessons.CSSIntro as CSSIntro
 import Lessons.CSSRules as CSSRules
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlAttributes as HtmlAttributes
@@ -22,10 +22,11 @@ import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
 import Lessons.JSFunctions as JSFunctions
 import Lessons.JSIntro as JSIntro
 import Markdown
-import Phosphor exposing (IconWeight(..), toHtml)
+import Phosphor as PI exposing (IconWeight(..), toHtml)
 import SHA1
 import String exposing (fromInt)
 import Task
+import Html.Attributes exposing (title)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -56,16 +57,21 @@ lessonDescriptions =
                 Chapter ld subOLs ->
                     List.foldr sum (ld :: lds) subOLs
     in
-    List.foldr sum [] outline
+    List.foldr sum [] outlines
 
 
 type Outline
     = Chapter LessonDescription (List Outline)
 
 
-outline : List Outline
-outline =
-    [ Chapter Chapters.welcome []
+welcome : Outline
+welcome =
+    Chapter Chapters.welcome []
+
+
+outlines : List Outline
+outlines =
+    [ welcome
     , Chapter Chapters.html
         [ Chapter HtmlIntro.lessonDescription []
         , Chapter HtmlAttributes.lesson []
@@ -86,6 +92,25 @@ outline =
     ]
 
 
+outlineFlat : List Outline
+outlineFlat =
+    let
+        sum ((Chapter _ subOLs) as ol) ols =
+            List.foldr sum (ol :: ols) subOLs
+    in
+    List.foldr sum [] outlines
+
+
+nextLesson : Outline -> Maybe Outline
+nextLesson prev =
+    dropWhile ((/=) prev) outlineFlat |> List.drop 1 |> List.head
+
+
+prevLesson : Outline -> Maybe Outline
+prevLesson prev =
+    dropWhile ((/=) prev) (List.reverse outlineFlat) |> List.drop 1 |> List.head
+
+
 main : Program () Model Msg
 main =
     Browser.element
@@ -104,7 +129,7 @@ type PreviewState
 
 
 type alias Model =
-    { currentLesson : { lesson : List LessonFile, description : LessonDescription }
+    { currentLesson : { lesson : List LessonFile, description : LessonDescription, outline : Outline }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -122,7 +147,7 @@ type DraggableId
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { currentLesson = { description = Chapters.welcome, lesson = [] }
+    ( { currentLesson = { description = Chapters.welcome, lesson = [], outline = welcome }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -136,7 +161,7 @@ init _ =
 
 
 type Msg
-    = GotoLesson LessonId
+    = GotoLesson Outline
     | ChangeEditor Int String
     | GotRestoredContent (List String)
     | ShowPreview String
@@ -205,13 +230,9 @@ update msg model =
             , Cmd.none
             )
 
-        ( GotoLesson id, _ ) ->
-            let
-                description =
-                    lessonDescriptionById id
-            in
+        ( GotoLesson ((Chapter description _) as ol), _ ) ->
             ( { model
-                | currentLesson = { lesson = description.lessonFiles, description = description }
+                | currentLesson = { lesson = description.lessonFiles, description = description, outline = ol }
                 , previewState = NoPreview
                 , showOutline = False
               }
@@ -363,10 +384,10 @@ subscriptions model =
 themeIcon theme =
     case theme of
         ForceDark ->
-            Phosphor.sun
+            PI.sun
 
         ForceLight ->
-            Phosphor.moon
+            PI.moon
 
 
 view : Model -> Html Msg
@@ -375,9 +396,9 @@ view model =
         [ nav [ class "container-fluid" ]
             [ ul []
                 [ li []
-                    [ span [ onClick ToggleOutline ] [ Phosphor.list Bold |> toHtml [] ]
+                    [ span [ onClick ToggleOutline ] [ PI.list Bold |> toHtml [] ]
                     , ul [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
-                        List.map outlineView outline
+                        List.map outlineView outlines
                     ]
                 ]
             , ul [] [ li [] [ text "A tour of Elm" ] ]
@@ -387,11 +408,7 @@ view model =
                     ]
                 ]
             ]
-        , if List.isEmpty model.currentLesson.lesson then
-            chapterView model.editorsHeight model.lessonWidth model.currentLesson.description
-
-          else
-            lessonView model.editorsHeight model.lessonWidth model.currentLesson.lesson model.currentLesson.description model.previewState
+        , lessonView model.editorsHeight model.lessonWidth model.currentLesson model.previewState
         ]
 
 
@@ -400,39 +417,61 @@ px x =
     fromInt x ++ "px"
 
 
-chapterView : Int -> Int -> LessonDescription -> Html Msg
-chapterView editorsHeight lessonWidth { body } =
+chapterNavView current =
+    let
+        next =
+            nextLesson current
+
+        prev =
+            prevLesson current
+
+        nextLink =
+            case next of
+                Just ol ->
+                    a [ onClick <| GotoLesson ol, title "Next lesson" ] [ regularIcon PI.skipForward ]
+
+                Nothing ->
+                    span [] [ regularIcon PI.skipForward ]
+
+        prevLink =
+            case prev of
+                Just ol ->
+                    a [ onClick <| GotoLesson ol, title "Previous lesson" ] [ regularIcon PI.skipBack ]
+
+                Nothing ->
+                    span [] [ regularIcon PI.skipBack ]
+    in
+    div [ class "chapterNav" ] [ prevLink, nextLink ]
+
+
+regularIcon i =
+    i Regular |> toHtml []
+
+
+lessonView editorsHeight lessonWidth { lesson, outline } previewState =
+    let
+        (Chapter { body } _) =
+            outline
+    in
     div [ class "lessonContainer" ]
         [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
-        , div [ class "left", style "width" (px lessonWidth) ] [ Markdown.toHtml [ class "md-content" ] body ]
-        , div [ class "right", style "left" (px (lessonWidth + 10)) ]
-            [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
-            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] [] ]
-            , div [ class "preview", style "top" (px <| editorsHeight + 10) ] [ text "" ]
+        , div [ class "left", style "width" (px lessonWidth) ]
+            [ chapterNavView outline
+            , Markdown.toHtml [ class "md-content" ] body
             ]
-        ]
-
-
-lessonView : Int -> Int -> Lesson -> LessonDescription -> PreviewState -> Html Msg
-lessonView editorsHeight lessonWidth lesson description previewState =
-    div [ class "lessonContainer" ]
-        [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
-        , div [ class "left", style "width" (px lessonWidth) ] <| lessonContentView description
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
             , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors lesson ]
-            , div [ class "preview", style "top" (px <| editorsHeight + 10) ]
-                [ button [ onClick RunCurrentLesson ] [ text "run" ]
-                , preview lesson previewState
-                ]
+            , if List.isEmpty lesson then
+                text ""
+
+              else
+                div [ class "preview", style "top" (px <| editorsHeight + 10) ]
+                    [ button [ onClick RunCurrentLesson ] [ text "run" ]
+                    , preview lesson previewState
+                    ]
             ]
         ]
-
-
-lessonContentView : LessonDescription -> List (Html Msg)
-lessonContentView { title, body } =
-    [ Markdown.toHtml [ class "md-content" ] body
-    ]
 
 
 preview : Lesson -> PreviewState -> Html Msg
@@ -473,19 +512,34 @@ fileView pos { filename, content } =
     ]
 
 
-lessonItemView : LessonDescription -> Html Msg
-lessonItemView ld =
-    li [ onClick <| GotoLesson ld.id ] [ text ld.title ]
-
-
 outlineView : Outline -> Html Msg
-outlineView (Chapter { id, title } subChapters) =
+outlineView ol =
     let
+        (Chapter { title } subChapters) =
+            ol
+
         chapterLink =
-            a [ onClick <| GotoLesson id ] [ text title ]
+            a [ onClick <| GotoLesson ol ] [ text title ]
     in
     if List.isEmpty subChapters then
         li [] [ chapterLink ]
 
     else
         li [] [ chapterLink, ul [] <| List.map outlineView subChapters ]
+
+
+{-| Drop elements in order as long as the predicate evaluates to `True`
+taken from <https://github.com/elm-community/list-extra/blob/8.7.0/src/List/Extra.elm>
+-}
+dropWhile : (a -> Bool) -> List a -> List a
+dropWhile predicate list =
+    case list of
+        [] ->
+            []
+
+        x :: xs ->
+            if predicate x then
+                dropWhile predicate xs
+
+            else
+                list

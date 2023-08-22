@@ -1,7 +1,15 @@
+a {
+  cursor: pointer;
+}
+
 .editor {
   font-ftheme: monospace;
 }
 
+.chapterNav {
+  margin-top: -1em;
+  text-align: right;
+}
 nav {
   border-bottom: 1px solid var(--dropdown-border-color);
 }
@@ -32,9 +40,6 @@ nav .outline ul, nav .outline p, nav .outline  li {
   display: block;
 }
 
-a {
-  cursor: pointer;
-}
 nav .outline  li {
   padding-left: 1em;
   font-size: 0.8em;
