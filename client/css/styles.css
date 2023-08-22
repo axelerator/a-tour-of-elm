@@ -18,12 +18,17 @@ nav li {
   cursor: pointer;
 }
 
+nav .tangram {
+  height: 1.5em;
+  padding: 0 0.5em;
+}
+
 nav .outline {
   position: absolute;
-  left: calc(var(--nav-element-spacing-horizontal) * -1);
   top: 3.5em;
+  right: 0;
   padding: 1em;
-  transform: translate(-100%, 0);
+  transform: translate(100%, 0);
   background-color: var(--card-background-color);
   transition: transform 0.5s ease-out;
   z-index: 10;

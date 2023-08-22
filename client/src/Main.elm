@@ -5,7 +5,7 @@ import Browser.Dom exposing (getViewport)
 import Chapters
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
-import Html exposing (Html, a, button, code, div, iframe, input, label, li, nav, ol, pre, span, text, textarea, ul)
+import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, textarea, ul)
 import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -391,14 +391,17 @@ view model =
         [ nav [ class "container-fluid" ]
             [ ul []
                 [ li []
-                    [ span [ onClick ToggleOutline ] [ PI.list Bold |> toHtml [] ]
+                    [ text "A tour of Elm"
+                    , img [ class "tangram", src "/assets/images/tangram.png" ] []
+                    ]
+                ]
+            , ul []
+                [ li []
+                    [ a [ onClick ToggleOutline ] [ PI.list Bold |> toHtml [] ]
                     , ul [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
                         List.map outlineView outlines
                     ]
-                ]
-            , ul [] [ li [] [ text "A tour of Elm" ] ]
-            , ul []
-                [ li [ onClick ToggleTheme ]
+                , li [ onClick ToggleTheme ]
                     [ themeIcon model.theme Regular |> toHtml []
                     ]
                 ]
