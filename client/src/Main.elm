@@ -22,11 +22,10 @@ import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
 import Lessons.JSFunctions as JSFunctions
 import Lessons.JSIntro as JSIntro
 import Markdown
-import Phosphor as PI exposing (IconWeight(..), toHtml)
+import Phosphor as PI exposing (IconVariant, IconWeight(..), toHtml)
 import SHA1
 import String exposing (fromInt)
 import Task
-import Phosphor exposing (IconVariant)
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -84,8 +83,12 @@ outlines =
 outlineFlat : List Outline
 outlineFlat =
     let
-        sum ((Chapter _ subOLs) as ol) ols =
-            List.foldr sum (ol :: ols) subOLs
+        sum ((Chapter _ subOLs) as self) ols =
+            let
+                descendants =
+                    List.foldr sum [] subOLs
+            in
+            self :: (descendants ++ ols)
     in
     List.foldr sum [] outlines
 
@@ -118,7 +121,7 @@ type PreviewState
 
 
 type alias Model =
-    { currentLesson : { lesson : List LessonFile, description : LessonDescription, outline : Outline }
+    { currentLesson : { lesson : List LessonFile, outline : Outline }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -136,7 +139,7 @@ type DraggableId
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { currentLesson = { description = Chapters.welcome, lesson = [], outline = welcome }
+    ( { currentLesson = { lesson = [], outline = welcome }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -174,11 +177,21 @@ dragConfig =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case ( msg, model.currentLesson ) of
-        ( StartDragging id, _ ) ->
+    let
+        lessonFiles =
+            model.currentLesson.lesson
+
+        (Chapter lessonDescription _) =
+            model.currentLesson.outline
+
+        currentLesson =
+            model.currentLesson
+    in
+    case msg of
+        StartDragging id ->
             ( { model | beingDragged = Just id }, Cmd.none )
 
-        ( OnDragBy ( dx, dy ), _ ) ->
+        OnDragBy ( dx, dy ) ->
             let
                 model_ =
                     case model.beingDragged of
@@ -195,15 +208,15 @@ update msg model =
             , Cmd.none
             )
 
-        ( ToggleOutline, _ ) ->
+        ToggleOutline ->
             ( { model | showOutline = not model.showOutline }
             , Cmd.none
             )
 
-        ( DragMsg dragMsg, _ ) ->
+        DragMsg dragMsg ->
             Draggable.update dragConfig dragMsg model
 
-        ( GotViewPort vp, _ ) ->
+        GotViewPort vp ->
             ( { model
                 | lessonWidth = round <| 0.5 * vp.viewport.width
                 , editorsHeight = round <| 0.5 * vp.viewport.height
@@ -211,26 +224,26 @@ update msg model =
             , Cmd.none
             )
 
-        ( GotoLesson ((Chapter description _) as ol), _ ) ->
+        GotoLesson outline ->
             ( { model
-                | currentLesson = { lesson = description.lessonFiles, description = description, outline = ol }
+                | currentLesson = { lesson = lessonDescription.lessonFiles, outline = outline }
                 , previewState = NoPreview
                 , showOutline = False
               }
-            , restore ( lessonIdStr description.id, List.length <| lessonEditors description.lessonFiles )
+            , restore ( lessonIdStr lessonDescription.id, List.length <| lessonEditors lessonDescription.lessonFiles )
             )
 
-        ( RunCurrentLesson, { lesson } ) ->
+        RunCurrentLesson ->
             ( { model | previewState = Loading }
-            , compile <| filesForRunning lesson
+            , compile <| filesForRunning lessonFiles
             )
 
-        ( ChangeEditor pos value, current ) ->
-            ( { model | currentLesson = { current | lesson = updateEditor current.lesson pos value } }
-            , store ( lessonIdStr current.description.id, String.fromInt pos, value )
+        ChangeEditor pos value ->
+            ( { model | currentLesson = { currentLesson | lesson = updateEditor lessonFiles pos value } }
+            , store ( lessonIdStr lessonDescription.id, String.fromInt pos, value )
             )
 
-        ( Compiled hash response, _ ) ->
+        Compiled hash response ->
             let
                 previewState =
                     case response of
@@ -249,12 +262,12 @@ update msg model =
             , Cmd.none
             )
 
-        ( ShowPreview hash, _ ) ->
+        ShowPreview hash ->
             ( { model | previewState = Loaded hash }
             , Cmd.none
             )
 
-        ( ToggleTheme, _ ) ->
+        ToggleTheme ->
             let
                 ( theme, themeStr ) =
                     case model.theme of
@@ -268,7 +281,7 @@ update msg model =
             , forceTheme themeStr
             )
 
-        ( GotRestoredContent contents, current ) ->
+        GotRestoredContent contents ->
             let
                 indexedContents =
                     List.indexedMap (\i c -> ( i, c )) contents
@@ -277,16 +290,16 @@ update msg model =
                     updateEditor l pos value
 
                 restoredEditors =
-                    List.foldr f current.lesson indexedContents
+                    List.foldr f lessonFiles indexedContents
             in
-            ( { model | currentLesson = { current | lesson = restoredEditors } }
+            ( { model | currentLesson = { currentLesson | lesson = restoredEditors } }
             , Cmd.none
             )
 
 
 filesForRunning : Lesson -> List ( String, String )
-filesForRunning lesson =
-    List.map (\{ filename, content } -> ( filename, content )) <| lessonFiles lesson
+filesForRunning lessonFiles =
+    List.map (\{ filename, content } -> ( filename, content )) <| lessonFiles
 
 
 type alias CompilePayload =
@@ -402,14 +415,8 @@ px x =
 chapterNavView : Outline -> Html Msg
 chapterNavView current =
     let
-        next =
-            nextLesson current
-
-        prev =
-            prevLesson current
-
         nextLink =
-            case next of
+            case nextLesson current of
                 Just ol ->
                     a [ onClick <| GotoLesson ol, title "Next lesson" ] [ regularIcon PI.skipForward ]
 
@@ -417,7 +424,7 @@ chapterNavView current =
                     span [] [ regularIcon PI.skipForward ]
 
         prevLink =
-            case prev of
+            case prevLesson current of
                 Just ol ->
                     a [ onClick <| GotoLesson ol, title "Previous lesson" ] [ regularIcon PI.skipBack ]
 
@@ -473,11 +480,6 @@ preview _ previewState =
 
         Failed msg ->
             pre [] [ code [] [ text msg ] ]
-
-
-lessonFiles : Lesson -> List LessonFile
-lessonFiles files =
-    files
 
 
 lessonEditors : List LessonFile -> List (Html Msg)
