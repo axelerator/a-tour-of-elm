@@ -5,15 +5,17 @@ import Browser.Dom exposing (getViewport)
 import Chapters
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
+import Editor exposing (Scroll)
 import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, textarea, ul)
-import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value)
+import Html.Attributes exposing (class, classList, for, id, name, spellcheck, src, style, tabindex, title, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Lazy
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Lesson exposing (FileType(..), Lesson, LessonDescription, LessonFile, LessonId(..), lessonIdStr)
+import Lesson exposing (FileType(..), LessonDescription, LessonId(..), lessonIdStr)
 import Lessons.CSSInclude as CSSInclude
-import Lessons.CSSIntro as CSSIntro
+import Lessons.CSSIntro as CSSIntro exposing (lessonDescription)
 import Lessons.CSSRules as CSSRules
 import Lessons.ElmIntro as ElmIntro
 import Lessons.HtmlAttributes as HtmlAttributes
@@ -103,7 +105,7 @@ prevLesson prev =
     dropWhile ((/=) prev) (List.reverse outlineFlat) |> List.drop 1 |> List.head
 
 
-main : Program () Model Msg
+main : Program String Model Msg
 main =
     Browser.element
         { init = init
@@ -120,8 +122,16 @@ type PreviewState
     | Failed String
 
 
+type alias OpenLessonFile =
+    { filename : String
+    , filetype : FileType
+    , content : String
+    , scroll : Scroll
+    }
+
+
 type alias Model =
-    { currentLesson : { lesson : List LessonFile, outline : Outline }
+    { currentLesson : { lesson : List OpenLessonFile, outline : Outline }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -137,8 +147,16 @@ type DraggableId
     | HorizontalSplit
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : String -> ( Model, Cmd Msg )
+init themeStr =
+    let
+        theme =
+            if themeStr == "light" then
+                ForceLight
+
+            else
+                ForceDark
+    in
     ( { currentLesson = { lesson = [], outline = welcome }
       , previewState = NoPreview
       , lessonWidth = 100
@@ -146,7 +164,7 @@ init _ =
       , drag = Draggable.init
       , beingDragged = Nothing
       , showOutline = False
-      , theme = ForceDark
+      , theme = theme
       }
     , Task.perform GotViewPort getViewport
     )
@@ -165,6 +183,12 @@ type Msg
     | ToggleOutline
     | Compiled String (Result Http.Error CompileResponse)
     | ToggleTheme
+    | FromEditor EditorMsg
+
+
+type EditorMsg
+    = SetText Int String
+    | OnScroll Int Scroll
 
 
 dragConfig : Draggable.Config DraggableId Msg
@@ -224,13 +248,24 @@ update msg model =
             , Cmd.none
             )
 
-        GotoLesson outline ->
+        GotoLesson ((Chapter upcomingLesson _) as outline) ->
+            let
+                toOpen { filename, filetype, content } =
+                    { filename = filename
+                    , filetype = filetype
+                    , content = content
+                    , scroll = { top = 0, left = 0 }
+                    }
+
+                openFiles =
+                    List.map toOpen upcomingLesson.lessonFiles
+            in
             ( { model
-                | currentLesson = { lesson = lessonDescription.lessonFiles, outline = outline }
+                | currentLesson = { lesson = openFiles, outline = outline }
                 , previewState = NoPreview
                 , showOutline = False
               }
-            , restore ( lessonIdStr lessonDescription.id, List.length <| lessonEditors lessonDescription.lessonFiles )
+            , restore ( lessonIdStr lessonDescription.id, List.length <| openFiles )
             )
 
         RunCurrentLesson ->
@@ -277,7 +312,7 @@ update msg model =
                         ForceLight ->
                             ( ForceDark, "dark" )
             in
-            ( { model | theme = theme }
+            ( { model | theme = Debug.log "tmmmm" theme }
             , forceTheme themeStr
             )
 
@@ -296,8 +331,28 @@ update msg model =
             , Cmd.none
             )
 
+        FromEditor editorMsg ->
+            case editorMsg of
+                SetText pos codeStr ->
+                    let
+                        updatedFiles =
+                            updateEditor lessonFiles pos codeStr
+                    in
+                    ( { model | currentLesson = { currentLesson | lesson = updatedFiles } }
+                    , Cmd.none
+                    )
 
-filesForRunning : Lesson -> List ( String, String )
+                OnScroll pos scroll ->
+                    let
+                        updatedFiles =
+                            updateEditorScroll lessonFiles pos scroll
+                    in
+                    ( { model | currentLesson = { currentLesson | lesson = updatedFiles } }
+                    , Cmd.none
+                    )
+
+
+filesForRunning : List OpenLessonFile -> List ( String, String )
 filesForRunning lessonFiles =
     List.map (\{ filename, content } -> ( filename, content )) <| lessonFiles
 
@@ -349,7 +404,20 @@ compileResponseDecoder =
         (Decode.field "error" <| Decode.maybe Decode.string)
 
 
-updateEditor : List LessonFile -> Int -> String -> List LessonFile
+updateEditorScroll : List OpenLessonFile -> Int -> Scroll -> List OpenLessonFile
+updateEditorScroll files pos scroll =
+    let
+        updateFile i file =
+            if i == pos then
+                { file | scroll = scroll }
+
+            else
+                file
+    in
+    List.indexedMap updateFile files
+
+
+updateEditor : List OpenLessonFile -> Int -> String -> List OpenLessonFile
 updateEditor files pos value =
     let
         updateFile i file =
@@ -406,7 +474,7 @@ view model =
                     ]
                 ]
             ]
-        , lessonView model.editorsHeight model.lessonWidth model.currentLesson model.previewState
+        , lessonView model model.editorsHeight model.lessonWidth model.currentLesson model.previewState
         ]
 
 
@@ -442,8 +510,8 @@ regularIcon i =
     i Regular |> toHtml []
 
 
-lessonView : Int -> Int -> { a | lesson : List LessonFile, outline : Outline } -> PreviewState -> Html Msg
-lessonView editorsHeight lessonWidth { lesson, outline } previewState =
+lessonView : Model -> Int -> Int -> { a | lesson : List OpenLessonFile, outline : Outline } -> PreviewState -> Html Msg
+lessonView model editorsHeight lessonWidth { lesson, outline } previewState =
     let
         (Chapter { body } _) =
             outline
@@ -456,7 +524,7 @@ lessonView editorsHeight lessonWidth { lesson, outline } previewState =
             ]
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
-            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors lesson ]
+            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors model lesson ]
             , if List.isEmpty lesson then
                 text ""
 
@@ -469,7 +537,7 @@ lessonView editorsHeight lessonWidth { lesson, outline } previewState =
         ]
 
 
-preview : Lesson -> PreviewState -> Html Msg
+preview : List OpenLessonFile -> PreviewState -> Html Msg
 preview _ previewState =
     case previewState of
         NoPreview ->
@@ -485,20 +553,32 @@ preview _ previewState =
             pre [] [ code [] [ text msg ] ]
 
 
-lessonEditors : List LessonFile -> List (Html Msg)
-lessonEditors files =
-    List.concat <| List.indexedMap fileView files
+lessonEditors : Model -> List OpenLessonFile -> List (Html Msg)
+lessonEditors model files =
+    List.concat <| List.indexedMap (fileView model.theme) files
 
 
-fileView : Int -> LessonFile -> List (Html Msg)
-fileView pos { filename, content } =
+fileView : Theme -> Int -> OpenLessonFile -> List (Html Msg)
+fileView theme pos ({ filename } as file) =
     let
         tabId =
             "tab-" ++ fromInt pos
+
+        themeName =
+            case theme of
+                ForceDark ->
+                    "Monokai"
+
+                ForceLight ->
+                    "GitHub"
     in
     [ input [ class "radiotab", name "tabs", tabindex 1, type_ "radio", id tabId ] []
     , label [ class "label", for tabId ] [ text filename ]
-    , div [ class "panel", tabindex 1 ] [ textarea [ class "editor", value content, onInput <| ChangeEditor pos ] [] ]
+    , div [ class "panel", tabindex 1 ]
+        [ Html.Lazy.lazy Editor.textareaStyle themeName
+        , Html.Lazy.lazy Editor.syntaxThemeStyle (Debug.log "tm" themeName)
+        , Editor.viewLanguage (FromEditor << OnScroll pos) (FromEditor << SetText pos) file
+        ]
     ]
 
 

@@ -12,8 +12,10 @@
 <body>
   <div id="myapp"></div>
   <script>
+  let theme = localStorage.getItem('theme') || "dark";
   var app = Elm.Main.init({
-    node: document.getElementById('myapp')
+    node: document.getElementById('myapp'),
+    flags: theme
   });
 
   app.ports.store.subscribe(function(data) {
@@ -39,7 +41,6 @@
     localStorage.setItem('theme', data);
     document.querySelector('html').setAttribute("data-theme", data);
   })
-  let theme = localStorage.getItem('theme');
   if (theme) {
     document.querySelector('html').setAttribute("data-theme", theme);
   }

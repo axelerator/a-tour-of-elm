@@ -2,10 +2,6 @@ a {
   cursor: pointer;
 }
 
-.editor {
-  font-ftheme: monospace;
-}
-
 .chapterNav {
   margin-top: -1em;
   text-align: right;
@@ -121,7 +117,10 @@ nav .outline  li {
   height: 100%;
 }
 
-.tabs textarea {
+.tabs .container {
+  height: 100%;
+}
+.tabs .panel {
   height: calc(100% - 3em);
 }
 
@@ -193,4 +192,90 @@ nav .outline  li {
     border-bottom: solid 2px #000;
   }
 
+}
+
+.container {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+/* editor styles */
+
+.textarea,
+.view-container {
+  box-sizing: border-box;
+  font-size: 1rem;
+  line-height: 1.2;
+  width: 100%;
+  height: 100%;
+  font-family: monospace;
+  letter-spacing: normal;
+  word-spacing: normal;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  white-space: pre;
+}
+
+.view-container > pre {
+}
+.view-container > pre > code {
+  font-size: 1rem;
+  line-height: 1.2;
+  font-family: monospace;
+  letter-spacing: normal;
+  word-spacing: normal;
+  white-space: pre;
+  padding: 0;
+  margin: 0;
+}
+
+.textarea {
+  color: rgba(0, 0, 0, 0.0);
+  resize: none;
+  z-index: 2;
+  position: relative;
+  padding: 10px;
+}
+
+.textarea-lc {
+  padding-left: 70px;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.view-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Elm Syntax Highlight CSS */
+pre.elmsh {
+  padding: 10px;
+  margin: 0;
+  text-align: left;
+  overflow: auto;
+}
+
+code.elmsh {
+  padding: 0;
+}
+
+.elmsh-line:before {
+  content: attr(data-elmsh-lc);
+  display: inline-block;
+  text-align: right;
+  width: 40px;
+  padding: 0 20px 0 0;
+  opacity: 0.3;
+  box-sizing: content-box;
 }
