@@ -71,8 +71,16 @@ For example this creates a function called `doubler`.
 doubler x = 2 * x
 ```
 
-On the left of the `=` sign is how we want to call the function and how we want to call it's inputs (aka _parameters_). On the 
+On the left of the `=` sign is how we want to call the function and how we want to call it's inputs (aka _arguments_). On the 
 right of the `=` sign we describe _how_ we transform the _input paramters_ into the output value.
+
+To call a function you just write its name followed by the values that you want to transform, for example:
+
+```
+answer = doubler 21
+```
+
+will compute the number `42` and assign it to the name `answer`.
 
 ## Records
 
