@@ -114,7 +114,10 @@ nav .outline  li {
 .editorActions {
   float: right;
   position: absolute;
-  right: 0.25em;
+  right: 0;
+}
+.editorActions > * {
+  margin-right: 0.5em;
 }
 
 .md-content h1, h2, h3, h4 {

@@ -21,6 +21,7 @@ import Lessons.CSSIntro as CSSIntro exposing (lessonDescription)
 import Lessons.CSSRules as CSSRules
 import Lessons.Elm.HelloWorld as ElmHelloWorld
 import Lessons.Elm.Intro as ElmIntro
+import Lessons.Elm.Lang as ElmLang
 import Lessons.HtmlAttributes as HtmlAttributes
 import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
@@ -40,6 +41,9 @@ port store : ( String, String, String ) -> Cmd msg
 
 
 port restore : ( String, Int ) -> Cmd msg
+
+
+port reset : ( String, Int ) -> Cmd msg
 
 
 port restored : (List String -> msg) -> Sub msg
@@ -84,6 +88,7 @@ outlines =
         ]
     , Chapter ElmIntro.lesson
         [ Chapter ElmHelloWorld.lesson []
+        , Chapter ElmLang.lesson []
         ]
     ]
 
@@ -178,7 +183,6 @@ init themeStr =
 
 type Msg
     = GotoLesson Outline
-    | ChangeEditor Int String
     | GotRestoredContent (List String)
     | ShowPreview String
     | RunCurrentLesson
@@ -190,6 +194,7 @@ type Msg
     | Compiled String (Result Http.Error CompileResponse)
     | ToggleTheme
     | FromEditor EditorMsg
+    | ResetCurrentSession
     | RequestExport
     | Export Posix
 
@@ -258,22 +263,15 @@ update msg model =
 
         GotoLesson ((Chapter upcomingLesson _) as outline) ->
             let
-                toOpen { filename, filetype, content } =
-                    { filename = filename
-                    , filetype = filetype
-                    , content = content
-                    , scroll = { top = 0, left = 0 }
-                    }
-
                 openFiles =
-                    List.map toOpen upcomingLesson.lessonFiles
+                    openLesson upcomingLesson
             in
             ( { model
                 | currentLesson = { openFiles = openFiles, outline = outline }
                 , previewState = NoPreview
                 , showOutline = False
               }
-            , restore ( lessonIdStr lessonDescription.id, List.length <| openFiles )
+            , restore ( lessonIdStr upcomingLesson.id, List.length <| openFiles )
             )
 
         RunCurrentLesson ->
@@ -281,9 +279,9 @@ update msg model =
             , compile <| filesForRunning lessonFiles
             )
 
-        ChangeEditor pos value ->
-            ( { model | currentLesson = { currentLesson | openFiles = updateEditor lessonFiles pos value } }
-            , store ( lessonIdStr lessonDescription.id, String.fromInt pos, value )
+        ResetCurrentSession ->
+            ( { model | currentLesson = { currentLesson | openFiles = openLesson lessonDescription } }
+            , reset ( lessonIdStr lessonDescription.id, List.length <| lessonFiles )
             )
 
         Compiled hash response ->
@@ -335,7 +333,7 @@ update msg model =
                 restoredEditors =
                     List.foldr f lessonFiles indexedContents
             in
-            ( { model | currentLesson = { currentLesson | openFiles = restoredEditors } }
+            ( { model | currentLesson = { currentLesson | openFiles = Debug.log "resotred" restoredEditors } }
             , Cmd.none
             )
 
@@ -347,7 +345,7 @@ update msg model =
                             updateEditor lessonFiles pos codeStr
                     in
                     ( { model | currentLesson = { currentLesson | openFiles = updatedFiles } }
-                    , Cmd.none
+                    , store ( lessonIdStr lessonDescription.id, String.fromInt pos, codeStr )
                     )
 
                 OnScroll pos scroll ->
@@ -376,6 +374,19 @@ update msg model =
             , Zip.toBytes zip
                 |> Download.bytes downloadName "application/zip"
             )
+
+
+openLesson : LessonDescription -> List OpenLessonFile
+openLesson { lessonFiles } =
+    let
+        toOpen { filename, filetype, content } =
+            { filename = filename
+            , filetype = filetype
+            , content = content
+            , scroll = { top = 0, left = 0 }
+            }
+    in
+    List.map toOpen lessonFiles
 
 
 filesForRunning : List OpenLessonFile -> List ( String, String )
@@ -447,8 +458,12 @@ updateEditor : List OpenLessonFile -> Int -> String -> List OpenLessonFile
 updateEditor files pos value =
     let
         updateFile i file =
+            let
+                _ =
+                    Debug.log "ue" ( i, pos, value )
+            in
             if i == pos && value /= "NOT YET STORED" then
-                { file | content = value }
+                { file | content = Debug.log "val" value }
 
             else
                 file
@@ -573,6 +588,7 @@ actionsView openFiles =
     else
         div [ class "editorActions" ]
             [ a [ onClick RequestExport, title "Downolad files as ZIP archive" ] [ regularIcon PI.download ]
+            , a [ onClick ResetCurrentSession, title "Reset files to lesson content" ] [ regularIcon PI.trash ]
             ]
 
 

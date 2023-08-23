@@ -38,6 +38,7 @@ type LessonId
     | JSFunctionsId
     | ElmId
     | ElmIntroId
+    | ElmLang
 
 
 type alias Lesson =
@@ -88,3 +89,6 @@ lessonIdStr id =
 
         ElmId ->
             "ElmId"
+
+        ElmLang ->
+            "ElmLang"

@@ -21,6 +21,7 @@
   app.ports.store.subscribe(function(data) {
     let lessonName = data[0];
     let editorPos = data[1];
+    console.log("storing", data);
     localStorage.setItem(`file---${lessonName}---${editorPos}`, data[2]);
   });
 
@@ -37,6 +38,16 @@
     }
     app.ports.restored.send(content);
   });
+
+  app.ports.reset.subscribe(function(data) {
+    let lessonName = data[0];
+    let editorCount = data[1];
+    for (let editorPos = 0; editorPos < editorCount;  editorPos++) {
+      localStorage.removeItem(`file---${lessonName}---${editorPos}`);
+    }
+  });
+
+
   app.ports.forceTheme.subscribe(function(data) {
     localStorage.setItem('theme', data);
     document.querySelector('html').setAttribute("data-theme", data);
