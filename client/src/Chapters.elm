@@ -124,11 +124,3 @@ of how JavaScript interacts with the HTML in our browser.
     , lessonFiles = []
     }
 
-
-elm : LessonDescription
-elm =
-    { id = ElmId
-    , title = "What is Elm?"
-    , body = "Hi there!"
-    , lessonFiles = []
-    }

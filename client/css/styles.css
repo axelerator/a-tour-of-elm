@@ -2,6 +2,12 @@ a {
   cursor: pointer;
 }
 
+blockquote > p {
+  margin: 0;
+  padding: 0;
+  font-style: italic;
+}
+
 .chapterNav {
   margin-top: -1em;
   text-align: right;

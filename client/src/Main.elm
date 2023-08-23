@@ -17,7 +17,8 @@ import Lesson exposing (FileType(..), LessonDescription, LessonId(..), lessonIdS
 import Lessons.CSSInclude as CSSInclude
 import Lessons.CSSIntro as CSSIntro exposing (lessonDescription)
 import Lessons.CSSRules as CSSRules
-import Lessons.ElmIntro as ElmIntro
+import Lessons.Elm.HelloWorld as ElmHelloWorld
+import Lessons.Elm.Intro as ElmIntro
 import Lessons.HtmlAttributes as HtmlAttributes
 import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
@@ -76,8 +77,8 @@ outlines =
         [ Chapter JSIntro.lesson []
         , Chapter JSFunctions.lesson []
         ]
-    , Chapter Chapters.elm
-        [ Chapter ElmIntro.lessonDescription []
+    , Chapter ElmIntro.lesson
+        [ Chapter ElmHelloWorld.lesson []
         ]
     ]
 

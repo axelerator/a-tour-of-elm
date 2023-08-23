@@ -1,9 +1,9 @@
-module Lessons.ElmIntro exposing (lessonDescription)
+module Lessons.Elm.HelloWorld exposing (lesson)
 
 import Lesson exposing (FileType(..), LessonId(..))
 
 
-lessonDescription =
+lesson =
     { id = ElmIntroId
     , title = "Hello Elm"
     , body = body
@@ -54,3 +54,4 @@ htmlIntroIndexHtml =
     </script>
   </body>
 </html>"""
+
