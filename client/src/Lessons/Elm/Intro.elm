@@ -36,13 +36,13 @@ To get the framework's code and bundle it up with the app code developers use ex
 
 So when you want to start a JavaScript SPA you have to learn:
 
-- JavaScript
+- the JavaScript language
 - a framework
 - a package manager/build tool
 
-Elm comes with all these things build in. 
+Elm comes with all these things **built in**. 
 
 That means once you have [installed](https://guide.elm-lang.org/install/elm) you're ready to go!
 
-All the exercises and examples can be copied to your computer and will work out of the box.
+The files of **each lesson can be downloaded as Zip archive** and you can try it yourself!
   """

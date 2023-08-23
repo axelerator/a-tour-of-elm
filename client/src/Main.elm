@@ -2,13 +2,15 @@ port module Main exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)
+import Bytes.Encode
 import Chapters
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Editor exposing (Scroll)
-import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, textarea, ul)
-import Html.Attributes exposing (class, classList, for, id, name, spellcheck, src, style, tabindex, title, type_, value)
-import Html.Events exposing (onClick, onInput)
+import File.Download as Download
+import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, ul)
+import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value)
+import Html.Events exposing (onClick)
 import Html.Lazy
 import Http
 import Json.Decode as Decode
@@ -29,6 +31,9 @@ import Phosphor as PI exposing (IconVariant, IconWeight(..), toHtml)
 import SHA1
 import String exposing (fromInt)
 import Task
+import Time exposing (Posix)
+import Zip exposing (Zip)
+import Zip.Entry
 
 
 port store : ( String, String, String ) -> Cmd msg
@@ -132,7 +137,7 @@ type alias OpenLessonFile =
 
 
 type alias Model =
-    { currentLesson : { lesson : List OpenLessonFile, outline : Outline }
+    { currentLesson : { openFiles : List OpenLessonFile, outline : Outline }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -158,7 +163,7 @@ init themeStr =
             else
                 ForceDark
     in
-    ( { currentLesson = { lesson = [], outline = welcome }
+    ( { currentLesson = { openFiles = [], outline = welcome }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -185,6 +190,8 @@ type Msg
     | Compiled String (Result Http.Error CompileResponse)
     | ToggleTheme
     | FromEditor EditorMsg
+    | RequestExport
+    | Export Posix
 
 
 type EditorMsg
@@ -204,7 +211,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         lessonFiles =
-            model.currentLesson.lesson
+            model.currentLesson.openFiles
 
         (Chapter lessonDescription _) =
             model.currentLesson.outline
@@ -262,7 +269,7 @@ update msg model =
                     List.map toOpen upcomingLesson.lessonFiles
             in
             ( { model
-                | currentLesson = { lesson = openFiles, outline = outline }
+                | currentLesson = { openFiles = openFiles, outline = outline }
                 , previewState = NoPreview
                 , showOutline = False
               }
@@ -275,7 +282,7 @@ update msg model =
             )
 
         ChangeEditor pos value ->
-            ( { model | currentLesson = { currentLesson | lesson = updateEditor lessonFiles pos value } }
+            ( { model | currentLesson = { currentLesson | openFiles = updateEditor lessonFiles pos value } }
             , store ( lessonIdStr lessonDescription.id, String.fromInt pos, value )
             )
 
@@ -328,7 +335,7 @@ update msg model =
                 restoredEditors =
                     List.foldr f lessonFiles indexedContents
             in
-            ( { model | currentLesson = { currentLesson | lesson = restoredEditors } }
+            ( { model | currentLesson = { currentLesson | openFiles = restoredEditors } }
             , Cmd.none
             )
 
@@ -339,7 +346,7 @@ update msg model =
                         updatedFiles =
                             updateEditor lessonFiles pos codeStr
                     in
-                    ( { model | currentLesson = { currentLesson | lesson = updatedFiles } }
+                    ( { model | currentLesson = { currentLesson | openFiles = updatedFiles } }
                     , Cmd.none
                     )
 
@@ -348,9 +355,27 @@ update msg model =
                         updatedFiles =
                             updateEditorScroll lessonFiles pos scroll
                     in
-                    ( { model | currentLesson = { currentLesson | lesson = updatedFiles } }
+                    ( { model | currentLesson = { currentLesson | openFiles = updatedFiles } }
                     , Cmd.none
                     )
+
+        RequestExport ->
+            ( model
+            , Task.perform Export Time.now
+            )
+
+        Export now ->
+            let
+                downloadName =
+                    lessonDescription.title ++ ".zip"
+
+                zip =
+                    zipLesson lessonFiles now
+            in
+            ( model
+            , Zip.toBytes zip
+                |> Download.bytes downloadName "application/zip"
+            )
 
 
 filesForRunning : List OpenLessonFile -> List ( String, String )
@@ -511,8 +536,8 @@ regularIcon i =
     i Regular |> toHtml []
 
 
-lessonView : Model -> Int -> Int -> { a | lesson : List OpenLessonFile, outline : Outline } -> PreviewState -> Html Msg
-lessonView model editorsHeight lessonWidth { lesson, outline } previewState =
+lessonView : Model -> Int -> Int -> { a | openFiles : List OpenLessonFile, outline : Outline } -> PreviewState -> Html Msg
+lessonView model editorsHeight lessonWidth { openFiles, outline } previewState =
     let
         (Chapter { body } _) =
             outline
@@ -525,17 +550,30 @@ lessonView model editorsHeight lessonWidth { lesson, outline } previewState =
             ]
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
-            , div [ class "editors", style "height" (px editorsHeight) ] [ div [ class "tabs" ] <| lessonEditors model lesson ]
-            , if List.isEmpty lesson then
+            , div [ class "editors", style "height" (px editorsHeight) ]
+                [ div [ class "tabs" ] <| actionsView openFiles :: lessonEditors model openFiles
+                ]
+            , if List.isEmpty openFiles then
                 text ""
 
               else
                 div [ class "preview", style "top" (px <| editorsHeight + 10) ]
                     [ button [ onClick RunCurrentLesson ] [ text "run" ]
-                    , preview lesson previewState
+                    , preview openFiles previewState
                     ]
             ]
         ]
+
+
+actionsView : List OpenLessonFile -> Html Msg
+actionsView openFiles =
+    if List.isEmpty openFiles then
+        text ""
+
+    else
+        div [ class "editorActions" ]
+            [ a [ onClick RequestExport, title "Downolad files as ZIP archive" ] [ regularIcon PI.download ]
+            ]
 
 
 preview : List OpenLessonFile -> PreviewState -> Html Msg
@@ -614,3 +652,19 @@ dropWhile predicate list =
 
             else
                 list
+
+
+zipLesson : List OpenLessonFile -> Posix -> Zip
+zipLesson files now =
+    let
+        toEntry { filename, content } =
+            Bytes.Encode.string content
+                |> Bytes.Encode.encode
+                |> Zip.Entry.store
+                    { path = filename
+                    , lastModified = ( Time.utc, now )
+                    , comment = Nothing
+                    }
+    in
+    List.map toEntry files
+        |> Zip.fromEntries
