@@ -3,7 +3,8 @@ port module Main exposing (main)
 import Browser
 import Browser.Dom exposing (getViewport)
 import Bytes.Encode
-import Chapters
+import Chapters exposing (welcome)
+import Dict exposing (Dict)
 import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Editor exposing (Scroll)
@@ -55,6 +56,9 @@ port readyForPreview : (String -> msg) -> Sub msg
 port forceTheme : String -> Cmd msg
 
 
+port setHash : String -> Cmd msg
+
+
 type Theme
     = ForceDark
     | ForceLight
@@ -93,6 +97,18 @@ outlines =
     ]
 
 
+allLessonIds : Dict String Outline
+allLessonIds =
+    List.map (\((Chapter { id } _) as o) -> ( lessonIdStr id, o )) outlineFlat
+        |> Dict.fromList
+
+
+outlineFromHash : String -> Outline
+outlineFromHash hash =
+    Dict.get (String.dropLeft 1 hash) allLessonIds
+        |> Maybe.withDefault welcome
+
+
 outlineFlat : List Outline
 outlineFlat =
     let
@@ -116,7 +132,11 @@ prevLesson prev =
     dropWhile ((/=) prev) (List.reverse outlineFlat) |> List.drop 1 |> List.head
 
 
-main : Program String Model Msg
+type alias Flags =
+    ( String, String )
+
+
+main : Program Flags Model Msg
 main =
     Browser.element
         { init = init
@@ -158,8 +178,8 @@ type DraggableId
     | HorizontalSplit
 
 
-init : String -> ( Model, Cmd Msg )
-init themeStr =
+init : ( String, String ) -> ( Model, Cmd Msg )
+init ( themeStr, hash ) =
     let
         theme =
             if themeStr == "light" then
@@ -167,8 +187,11 @@ init themeStr =
 
             else
                 ForceDark
+
+        ((Chapter upcomingLesson _) as outline) =
+            outlineFromHash hash
     in
-    ( { currentLesson = { openFiles = [], outline = welcome }
+    ( { currentLesson = { openFiles = openLesson upcomingLesson, outline = outline }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -177,7 +200,10 @@ init themeStr =
       , showOutline = False
       , theme = theme
       }
-    , Task.perform GotViewPort getViewport
+    , Cmd.batch
+        [ Task.perform GotViewPort getViewport
+        , restore ( lessonIdStr upcomingLesson.id, List.length <| upcomingLesson.lessonFiles )
+        ]
     )
 
 
@@ -271,7 +297,10 @@ update msg model =
                 , previewState = NoPreview
                 , showOutline = False
               }
-            , restore ( lessonIdStr upcomingLesson.id, List.length <| openFiles )
+            , Cmd.batch
+                [ restore ( lessonIdStr upcomingLesson.id, List.length <| openFiles )
+                , setHash <| lessonIdStr upcomingLesson.id
+                ]
             )
 
         RunCurrentLesson ->
@@ -318,7 +347,7 @@ update msg model =
                         ForceLight ->
                             ( ForceDark, "dark" )
             in
-            ( { model | theme = Debug.log "tmmmm" theme }
+            ( { model | theme = theme }
             , forceTheme themeStr
             )
 
@@ -333,7 +362,7 @@ update msg model =
                 restoredEditors =
                     List.foldr f lessonFiles indexedContents
             in
-            ( { model | currentLesson = { currentLesson | openFiles = Debug.log "resotred" restoredEditors } }
+            ( { model | currentLesson = { currentLesson | openFiles = restoredEditors } }
             , Cmd.none
             )
 
@@ -458,12 +487,8 @@ updateEditor : List OpenLessonFile -> Int -> String -> List OpenLessonFile
 updateEditor files pos value =
     let
         updateFile i file =
-            let
-                _ =
-                    Debug.log "ue" ( i, pos, value )
-            in
             if i == pos && value /= "NOT YET STORED" then
-                { file | content = Debug.log "val" value }
+                { file | content = value }
 
             else
                 file
@@ -631,7 +656,7 @@ fileView theme pos ({ filename } as file) =
     , label [ class "label", for tabId ] [ text filename ]
     , div [ class "panel", tabindex 1 ]
         [ Html.Lazy.lazy Editor.textareaStyle themeName
-        , Html.Lazy.lazy Editor.syntaxThemeStyle (Debug.log "tm" themeName)
+        , Html.Lazy.lazy Editor.syntaxThemeStyle themeName
         , Editor.viewLanguage (FromEditor << OnScroll pos) (FromEditor << SetText pos) file
         ]
     ]
