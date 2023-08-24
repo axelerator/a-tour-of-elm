@@ -23,7 +23,9 @@ import Lessons.CSSRules as CSSRules
 import Lessons.Elm.HelloWorld as ElmHelloWorld
 import Lessons.Elm.Intro as ElmIntro
 import Lessons.Elm.Lang as ElmLang
+import Lessons.Elm.PatternMatching as ElmPatternMatching
 import Lessons.Elm.Types as ElmTypes
+import Lessons.Elm.TEA as ElmTEA
 import Lessons.HtmlAttributes as HtmlAttributes
 import Lessons.HtmlIntro as HtmlIntro
 import Lessons.HtmlUrlAndImages as HtmlUrlAndImages
@@ -95,6 +97,8 @@ outlines =
         [ Chapter ElmHelloWorld.lesson []
         , Chapter ElmLang.lesson []
         , Chapter ElmTypes.lesson []
+        , Chapter ElmPatternMatching.lesson []
+        , Chapter ElmTEA.lesson []
         ]
     ]
 

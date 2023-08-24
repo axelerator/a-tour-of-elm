@@ -76,7 +76,7 @@ right of the `=` sign we describe _how_ we transform the _input paramters_ into 
 
 To call a function you just write its name followed by the values that you want to transform, for example:
 
-```
+```elm
 answer = doubler 21
 ```
 

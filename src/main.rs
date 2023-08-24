@@ -28,7 +28,7 @@ async fn main() {
     app = app
         .route("/compile/:run", post(compile_handler))
         .route("/run/:run_hash/:rest", get(handler))
-        .layer(DefaultBodyLimit::max(1024));
+        .layer(DefaultBodyLimit::max(4096));
 
     tokio::spawn(async {
         let minutes_10 = 10 * 60 * 1000;

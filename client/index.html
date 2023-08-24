@@ -31,6 +31,7 @@
     flags: [theme, hash]
   });
   setTheme(theme);
+  document.querySelectorAll('.md-content pre code[class^="lang"]').forEach( e => hljs.highlightBlock(e));
 
   app.ports.store.subscribe(function(data) {
     let lessonName = data[0];
@@ -69,6 +70,9 @@
 
   app.ports.lessonChanged.subscribe(function(data) {
       window.location.hash = data;
+      setTimeout(() => {
+            document.querySelectorAll('.md-content pre code[class^="lang"]').forEach( e => hljs.highlightBlock(e));
+      }, 1000);
   });
 
 

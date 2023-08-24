@@ -39,6 +39,8 @@ type LessonId
     | ElmId
     | ElmIntroId
     | ElmLang
+    | ElmTEA
+    | ElmPatternMatching
 
 
 type alias Lesson =
@@ -92,3 +94,9 @@ lessonIdStr id =
 
         ElmLang ->
             "ElmLang"
+
+        ElmTEA ->
+            "ElmTEA"
+
+        ElmPatternMatching ->
+            "ElmPatternMatching"
