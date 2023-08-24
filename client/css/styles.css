@@ -21,13 +21,13 @@ nav li {
 }
 
 nav .tangram {
-  height: 1.5em;
+  height: 1.3em;
   padding: 0 0.5em;
 }
 
 nav .outline {
   position: absolute;
-  top: 3.5em;
+  top: 3.1em;
   right: 0;
   padding: 1em;
   transform: translate(100%, 0);
