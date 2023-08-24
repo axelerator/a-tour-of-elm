@@ -5,7 +5,7 @@ import Lesson exposing (FileType(..), LessonId(..))
 
 lesson =
     { id = ElmLang
-    , title = "Custom Types"
+    , title = "Custom Types & Aliases" 
     , body = body
     , lessonFiles = [ mainElm, indexHtml ]
     }
@@ -118,10 +118,13 @@ discomfort bodyPart =
 You can execute the full example on the right to see that the Elm compiler confirms that we handled all body 
 that we defined.
 
-## Exercise
+### Exercise
 
 Add `BodyPart` variants for heart and feet to the `BodyPart` `type` definition.
+
+
   """
+
 
 
 htmlIntroIndexHtml =

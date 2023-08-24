@@ -2,31 +2,6 @@ module Chapters exposing (..)
 
 import Lesson exposing (LessonDescription, LessonId(..))
 
-
-
-{-
-
-   - Welcome
-     - HTML
-       - Tags & Elements
-       - Attributes
-       - URLs & Images
-     - CSS
-       - Inline styles
-       - Rules & Selectors
-       - External Stylesheets
-     - JavaScript
-       - Variables and Statements
-       - Functions
-       - Interactivity
-     - Elm
-       - Hello world
-       - values & functions
-       - Data & Presentation (model + view , just a local model variable with a static value)
-       - Interactivity ( color slider)
--}
-
-
 welcome : LessonDescription
 welcome =
     { id = WelcomeId
@@ -39,7 +14,7 @@ This tutorial is your gateway to the world of programming,
 and guess what? No prior experience required!
 
 Web apps get delivered to the user through the _browser_ utilizing multiple technologies.
-Most importantly `Html`, `JavaScript` and `CSS`.
+Most importantly `Html`, `JavaScript` and `CSS` which is why we cover the basics of those here too.
 
 There are already tons of excellent tutorials out there to learn these in depth. And developers spend
 years on mastering _each_ of those! 🥵
@@ -47,7 +22,9 @@ years on mastering _each_ of those! 🥵
 The chapters in this tour aim to provide you ramp you up as quickly as possible, focussing only on what's
 absolutely necesseray to be able to put your Elm code into action.
 
-If you're already familiar with them feel free to skip to the Elm chapter directly. 🚀
+Each lesson comes with code examples and a little exercise that you can run in your browser, no software installation needed.
+
+If you're already familiar with them feel free to skip directly to the Elm chapter. 🚀
 """
     , lessonFiles = []
     }
