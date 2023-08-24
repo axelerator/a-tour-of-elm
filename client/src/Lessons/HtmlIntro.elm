@@ -29,7 +29,7 @@ use for certain concepts.
 A `HTML` document is made up of **elements**. For example an element to display a paragraph is called just `p`
 and looks like this:
 
-```html
+```xml
 <p>some text</p>
 ```
 

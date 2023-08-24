@@ -1,4 +1,4 @@
-module Lessons.Elm.Types exposing (lesson)
+module Lessons.Elm.TEA exposing (lesson)
 
 import Lesson exposing (FileType(..), LessonId(..))
 
@@ -27,17 +27,13 @@ mainElm =
 
 mainElmContent =
     """module Main exposing (main)
-import Html exposing (..)
+import Browser
+import Html exposing (Html, button, div, text)
+import Html.Events exposing (onClick)
 
-main = text veryVeryHappy
+main =
+  Browser.sandbox { init = init, update = update, view = view }
 
-veryVeryHappy = howHappy 2
-
-howHappy howMuch = iFeelVery howMuch "happy" 
-
-iFeelVery : Int -> String -> String
-iFeelVery howMuch how = 
-  "I feel " ++ String.repeat howMuch "very " ++ how 
 """
 
 
@@ -121,3 +117,4 @@ htmlIntroIndexHtml =
     </script>
   </body>
 </html>"""
+

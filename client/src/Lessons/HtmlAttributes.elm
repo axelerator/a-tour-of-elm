@@ -27,13 +27,13 @@ content.
 
 One example is the `<input>` tag. So **instead** of writing:
 
-```html 
+```xml 
 <input></input> 
 ```
 
 We can use the following shorter version, that has the exact same meaning:
 
-```html 
+```xml 
 <input />
 ```
 

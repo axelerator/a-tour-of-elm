@@ -57,7 +57,7 @@ port readyForPreview : (String -> msg) -> Sub msg
 port forceTheme : String -> Cmd msg
 
 
-port setHash : String -> Cmd msg
+port lessonChanged : String -> Cmd msg
 
 
 type Theme
@@ -301,7 +301,7 @@ update msg model =
               }
             , Cmd.batch
                 [ restore ( lessonIdStr upcomingLesson.id, List.length <| openFiles )
-                , setHash <| lessonIdStr upcomingLesson.id
+                , lessonChanged <| lessonIdStr upcomingLesson.id
                 ]
             )
 
@@ -588,7 +588,7 @@ lessonView model editorsHeight lessonWidth { openFiles, outline } previewState =
         [ div [ Draggable.mouseTrigger VerticalSplit DragMsg, class "separator", style "left" (px lessonWidth) ] []
         , div [ class "left", style "width" (px lessonWidth) ]
             [ chapterNavView outline
-            , Markdown.toHtml [ class "md-content" ] body
+            , markdown body
             ]
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
@@ -711,3 +711,15 @@ zipLesson files now =
     in
     List.map toEntry files
         |> Zip.fromEntries
+
+
+mdOptions =
+    { githubFlavored = Just { tables = True, breaks = False }
+    , defaultHighlighting = Just "html"
+    , sanitize = False
+    , smartypants = True
+    }
+
+
+markdown =
+    Markdown.toHtmlWith mdOptions [ class "md-content" ]
