@@ -172,12 +172,6 @@ nav .outline  li {
 
 }
 
-.tabs:not(:has(.radiotab:checked)) :nth-child(1 of .label),
-.radiotab:checked + .label {
-  --background-color: var(--primary);
-  --border-color: var(--primary);
-  --color: var(--primary-inverse);
-}
 
 .panel {
   display: none;
@@ -191,8 +185,12 @@ nav .outline  li {
   height: calc(100% - 4.5em);
 }
 
-.radiotab:checked + .label + .panel,
-.tabs:not(:has(.radiotab:checked)) :nth-child(1 of .panel) {
+.tabs .label.active {
+  --background-color: var(--primary);
+  --border-color: var(--primary);
+  --color: var(--primary-inverse);
+}
+.tabs .panel.active {
   display: block;
 }
 

@@ -170,7 +170,7 @@ type alias OpenLessonFile =
 
 
 type alias Model =
-    { currentLesson : { openFiles : List OpenLessonFile, outline : Outline }
+    { currentLesson : { currentTab: Maybe Int, openFiles : List OpenLessonFile, outline : Outline }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -198,8 +198,18 @@ init ( themeStr, hash ) =
 
         ((Chapter upcomingLesson _) as outline) =
             outlineFromHash hash
+        openFiles = openLesson upcomingLesson
+        currentTab =
+          if List.isEmpty openFiles then
+            Nothing
+          else
+            Just 0
     in
-    ( { currentLesson = { openFiles = openLesson upcomingLesson, outline = outline }
+    ( { currentLesson = 
+        { openFiles = openFiles
+        , outline = outline 
+        , currentTab = currentTab
+        }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -217,6 +227,7 @@ init ( themeStr, hash ) =
 
 type Msg
     = GotoLesson Outline
+    | SwitchActiveTab Int
     | GotRestoredContent (List String)
     | ShowPreview String
     | RunCurrentLesson
@@ -299,9 +310,14 @@ update msg model =
             let
                 openFiles =
                     openLesson upcomingLesson
+                currentTab =
+                  if List.isEmpty openFiles then
+                    Nothing
+                  else
+                    Just 0
             in
             ( { model
-                | currentLesson = { openFiles = openFiles, outline = outline }
+                | currentLesson = { openFiles = openFiles, outline = outline, currentTab = currentTab }
                 , previewState = NoPreview
                 , showOutline = False
               }
@@ -321,6 +337,11 @@ update msg model =
             , reset ( lessonIdStr lessonDescription.id, List.length <| lessonFiles )
             )
 
+
+        SwitchActiveTab tab ->
+            ( { model | currentLesson = { currentLesson | currentTab = Just tab } }
+            , Cmd.none
+            )
         Compiled hash response ->
             let
                 previewState =
@@ -584,8 +605,8 @@ regularIcon i =
     i Regular |> toHtml []
 
 
-lessonView : Model -> Int -> Int -> { a | openFiles : List OpenLessonFile, outline : Outline } -> PreviewState -> Html Msg
-lessonView model editorsHeight lessonWidth { openFiles, outline } previewState =
+lessonView : Model -> Int -> Int -> { a | openFiles : List OpenLessonFile, outline : Outline, currentTab: Maybe Int } -> PreviewState -> Html Msg
+lessonView model editorsHeight lessonWidth { openFiles, outline, currentTab} previewState =
     let
         (Chapter { body } _) =
             outline
@@ -599,7 +620,7 @@ lessonView model editorsHeight lessonWidth { openFiles, outline } previewState =
         , div [ class "right", style "left" (px (lessonWidth + 10)) ]
             [ div [ Draggable.mouseTrigger HorizontalSplit DragMsg, class "separatorH", style "top" (px editorsHeight) ] []
             , div [ class "editors", style "height" (px editorsHeight) ]
-                [ div [ class "tabs" ] <| actionsView openFiles :: lessonEditors model openFiles
+                [ div [ class "tabs" ] <| actionsView openFiles :: lessonEditors model currentTab openFiles
                 ]
             , if List.isEmpty openFiles then
                 text ""
@@ -641,13 +662,13 @@ preview _ previewState =
             pre [] [ code [] [ text msg ] ]
 
 
-lessonEditors : Model -> List OpenLessonFile -> List (Html Msg)
-lessonEditors model files =
-    List.concat <| List.indexedMap (fileView model.theme) files
+lessonEditors : Model -> Maybe Int -> List OpenLessonFile -> List (Html Msg)
+lessonEditors model openTab files =
+    List.concat <| List.indexedMap (fileView model.theme openTab) files
 
 
-fileView : Theme -> Int -> OpenLessonFile -> List (Html Msg)
-fileView theme pos ({ filename } as file) =
+fileView : Theme -> Maybe Int -> Int -> OpenLessonFile -> List (Html Msg)
+fileView theme currentTab pos ({ filename } as file) =
     let
         tabId =
             "tab-" ++ fromInt pos
@@ -659,10 +680,15 @@ fileView theme pos ({ filename } as file) =
 
                 ForceLight ->
                     "GitHub"
+        active = currentTab == Just pos
     in
     [ input [ class "radiotab", name "tabs", tabindex 1, type_ "radio", id tabId ] []
-    , label [ class "label", for tabId ] [ text filename ]
-    , div [ class "panel", tabindex 1 ]
+    , label 
+      [ classList [("label", True),("active", active)]
+      , onClick <| SwitchActiveTab pos
+      , for tabId 
+      ] [ text filename ]
+    , div [ classList [("panel", True), ("active", active)], tabindex 1 ]
         [ Html.Lazy.lazy Editor.textareaStyle themeName
         , Html.Lazy.lazy Editor.syntaxThemeStyle themeName
         , Editor.viewLanguage (FromEditor << OnScroll pos) (FromEditor << SetText pos) file
