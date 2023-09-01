@@ -15696,18 +15696,21 @@ var $author$project$Main$view = function (model) {
 							[
 								A2(
 								$elm$html$Html$li,
-								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$text('A tour of Elm'),
+										$elm$html$Html$Attributes$class('brand')
+									]),
+								_List_fromArray(
+									[
 										A2(
 										$elm$html$Html$img,
 										_List_fromArray(
 											[
 												$elm$html$Html$Attributes$class('tangram'),
-												$elm$html$Html$Attributes$src('/assets/images/tangram.png')
+												$elm$html$Html$Attributes$src('/assets/images/elm-tour-logo.svg')
 											]),
-										_List_Nil)
+										_List_Nil),
+										$elm$html$Html$text('A tour of Elm')
 									]))
 							])),
 						A2(

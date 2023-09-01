@@ -553,9 +553,9 @@ view model =
     div []
         [ nav [ class "container-fluid" ]
             [ ul []
-                [ li []
-                    [ text "A tour of Elm"
-                    , img [ class "tangram", src "/assets/images/tangram.png" ] []
+                [ li [class "brand"]
+                    [ img [ class "tangram", src "/assets/images/elm-tour-logo.svg" ] []
+                    , text "A tour of Elm"
                     ]
                 ]
             , ul []

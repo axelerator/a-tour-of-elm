@@ -20,8 +20,14 @@ nav li {
   cursor: pointer;
 }
 
+nav .brand {
+  padding-left: 2.5em;
+}
 nav .tangram {
-  height: 1.3em;
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  height: 2.0em;
   padding: 0 0.5em;
 }
 
