@@ -246,8 +246,9 @@ fn create_boiler_plate(elm_boiler_plate_dir: &Path) {
             .expect("Failed to start yes process");
         let yes_out = yes.stdout.expect("Failed to open echo stdout");
 
-        let elm_init = Command::new("elm")
+        let elm_init = Command::new("npx")
             .current_dir(&elm_boiler_plate_dir)
+            .arg("elm")
             .arg("init")
             .stdin(Stdio::from(yes_out))
             .stdout(Stdio::piped())
