@@ -69,8 +69,9 @@ choice. """
 
 
 html =
-    """<html>
+    """<html lang="en">
   <head>
+    <title>Html with style!</title>
     <style>
       h1 {
         color: purple;

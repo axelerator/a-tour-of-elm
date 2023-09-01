@@ -74,8 +74,9 @@ The `Main.elm` contains the simplest Elm application one can think of. It just d
 
 htmlIntroIndexHtml =
     """<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <title>My Elm app</title>
     <script src="main.js"></script>
   </head>
   <body>

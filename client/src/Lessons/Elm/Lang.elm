@@ -108,8 +108,9 @@ Modify the `greeter` function so it says "Hello Grace Hopper from planet Earth!"
 
 htmlIntroIndexHtml =
     """<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <title>My Elm app</title>
     <script src="main.js"></script>
   </head>
   <body>

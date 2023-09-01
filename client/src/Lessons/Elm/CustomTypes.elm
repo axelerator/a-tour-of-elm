@@ -129,8 +129,9 @@ Add `BodyPart` variants for heart and feet to the `BodyPart` `type` definition.
 
 htmlIntroIndexHtml =
     """<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <title>My Elm app</title>
     <script src="main.js"></script>
   </head>
   <body>

@@ -59,6 +59,7 @@ let fruit = "melon"
 html =
     """<html>
   <head> 
+    <title>With external JS</title>
     <script src="my-functions.js"></script>
     <script>
       alert(acidify("apple cider"))

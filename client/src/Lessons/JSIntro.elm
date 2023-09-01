@@ -40,7 +40,10 @@ indexHtml =
     }
 
 html =
-    """<html>
+    """<html lang="en">
+  <head>
+    <title>My document with JS</title>
+  </head>
   <body>
     <script>
       let yummy = "apple"

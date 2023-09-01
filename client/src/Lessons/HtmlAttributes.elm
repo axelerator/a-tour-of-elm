@@ -19,10 +19,10 @@ indexHtml =
 
 
 body =
-    """# Attributes & self-closing elements
+    """# Attributes & void elements
 
 Before we look at attributes I want to mentions a special flavour of elements
-called _"self closing"_. Contrary to regular elements they can't have any
+called _"void elements"_. Contrary to regular elements they can't have any
 content.
 
 One example is the `<input>` tag. So **instead** of writing:
@@ -31,13 +31,11 @@ One example is the `<input>` tag. So **instead** of writing:
 <input></input> 
 ```
 
-We can use the following shorter version, that has the exact same meaning:
+We can simply omit the closing tag. So the following has the exact same meaning:
 
 ```xml 
-<input />
+<input>
 ```
-
-Note the slash `/` at the _end_ of the tag.
 
 ### Attributes
 
@@ -61,8 +59,11 @@ documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#i
 
 
 html =
-    """<html>
+    """<html lang="en">
+  <head>
+    <title>My document</title>
+  </head>
   <body>
-    <input type="text" />
+    <input type="text">
   </body>
 </html>"""

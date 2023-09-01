@@ -160,8 +160,9 @@ You definitly deserve a break if you've mad it until here, but if you still want
 
 htmlIntroIndexHtml =
     """<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <title>My Elm app</title>
     <script src="main.js"></script>
   </head>
   <body>

@@ -41,6 +41,10 @@ On the right you find a document that only contains an `<img />` element. It's
 also a _self-closing_ element as it can't contain other elements.
 
 In the `src` attribute we specify the `URL` from where to load the image. 
+The alt tag is a mandatory attribute to give a textual description of the images
+content for visually impaired people who use screen readers.
+
+Also note how a the attributes can be spread across multiple lines to increase readability.
 
 ### Exercise
 
@@ -51,8 +55,13 @@ In the `src` attribute we specify the `URL` from where to load the image.
 
 
 html =
-    """<html>
+    """<html lang="en">
+  <head>
+    <title>My document</title>
+  </head>
   <body>
-    <img src="https://guide.elm-lang.org/architecture/buttons.svg" />
+    <img 
+      src="https://guide.elm-lang.org/architecture/buttons.svg" 
+      alt="A diagram of the Elm architecture">
   </body>
 </html>"""

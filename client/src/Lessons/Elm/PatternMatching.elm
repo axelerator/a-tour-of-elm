@@ -135,8 +135,9 @@ it repsonds with "the starting point for a Piña Colada".
 
 htmlIntroIndexHtml =
     """<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <title>My Elm app</title>
     <script src="main.js"></script>
   </head>
   <body>

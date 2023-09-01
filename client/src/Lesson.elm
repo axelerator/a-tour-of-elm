@@ -75,7 +75,7 @@ lessonIdStr id =
             "HtmlAttributesId"
 
         HtmlUrlAndImagesId ->
-            "HtmlAttributesId"
+            "HtmlUrlAndImagesId"
 
         WelcomeId ->
             "WelcomeId"
