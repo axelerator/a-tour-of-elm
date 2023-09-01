@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/axelerator/a-tour-of-elm#readme",
   "dependencies": {
+    "@lydell/elm": "^0.19.1-12",
     "html-validate": "^8.3.0",
     "stylelint": "^15.10.3",
     "stylelint-config-standard": "^34.0.0"
