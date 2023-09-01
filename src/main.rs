@@ -128,6 +128,18 @@ async fn compile_handler(
                     errors = format!("{errors}\n{0:}\n{build_error}", file.filename);
                 }
             }
+            if file.filename.ends_with(".css") {
+                let make_out = Command::new("npx")
+                    .current_dir(&run_dir)
+                    .arg("stylelint")
+                    .arg(&file.filename)
+                    .output()
+                    .expect("Failed to compile");
+                if !make_out.status.success() {
+                    let build_error = String::from_utf8_lossy(&make_out.stderr).to_string();
+                    errors = format!("{errors}\n{0:}\n{build_error}", file.filename);
+                }
+            }
         }
 
         if compile_elm {

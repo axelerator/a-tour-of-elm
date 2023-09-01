@@ -76,16 +76,16 @@ What happens if you link both stylesheets?
 
 
 htmlIntroIndexHtml =
-    """<html>
+    """<html lang="en">
   <head>
     <link rel="stylesheet" href="styles.css">
+    <title>My HTML doc</title>
   </head>
   <body>
     <h1>I am a red heading</h1>
     <p>I am a yellow paragraph</p>
   </body>
 </html>"""
-
 
 stylesCSS =
     """
