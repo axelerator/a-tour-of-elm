@@ -1,0 +1,22 @@
+{
+  "name": "a-tour-of-elm",
+  "version": "1.0.0",
+  "description": "An interactive guide to building web apps with Elm",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axelerator/a-tour-of-elm.git"
+  },
+  "author": "Axel Tetzlaff",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/axelerator/a-tour-of-elm/issues"
+  },
+  "homepage": "https://github.com/axelerator/a-tour-of-elm#readme",
+  "dependencies": {
+    "html-validate": "^8.3.0"
+  }
+}
