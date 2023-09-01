@@ -155,8 +155,9 @@ async fn compile_handler(
 
             copy_files_with_extension(&run_dir, &run_dir.join("elm").join("src"), "elm").unwrap();
 
-            let make_out = Command::new("elm")
+            let make_out = Command::new("npx")
                 .current_dir(&run_dir.join("elm"))
+                .arg("elm")
                 .arg("make")
                 .arg("src/Main.elm")
                 .arg("--output=../main.js")
