@@ -277,6 +277,14 @@ nav .outline  li {
   z-index: 1;
 }
 
+.explanation {
+  position: absolute;
+  width: 90%;
+  left: 5%;
+  padding: 1em;
+  font-size: 0.8em;
+}
+
 /* Elm Syntax Highlight CSS */
 pre.elmsh {
   padding: 10px;

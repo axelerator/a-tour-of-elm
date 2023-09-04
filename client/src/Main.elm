@@ -9,8 +9,8 @@ import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Editor exposing (Scroll)
 import File.Download as Download
-import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, ul)
-import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value)
+import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, ul, p)
+import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value, disabled)
 import Html.Events exposing (onClick)
 import Html.Lazy
 import Http
@@ -159,6 +159,8 @@ type PreviewState
     | Loading
     | Loaded String
     | Failed String
+    | LoadingExplanation String 
+    | FailedWithExplanation String String
 
 
 type alias OpenLessonFile =
@@ -237,11 +239,14 @@ type Msg
     | DragMsg (Draggable.Msg DraggableId)
     | ToggleOutline
     | Compiled String (Result Http.Error CompileResponse)
+    | ExplanationReceived (Result Http.Error ExplainResponse)
+    | DismissExplanation
     | ToggleTheme
     | FromEditor EditorMsg
     | ResetCurrentSession
     | RequestExport
     | Export Posix
+    | ClickedExplain
 
 
 type EditorMsg
@@ -331,6 +336,46 @@ update msg model =
             ( { model | previewState = Loading }
             , compile <| filesForRunning lessonFiles
             )
+
+        ClickedExplain ->
+          case model.previewState of
+            Failed error -> 
+              ( { model | previewState = LoadingExplanation error }
+              , requestExplanation <| filesForRunning lessonFiles
+              )
+            _ -> (model, Cmd.none)
+        ExplanationReceived httpRes ->
+          let
+              previewState =
+                case model.previewState of
+                  LoadingExplanation err ->
+                    case httpRes of
+                        Err _ ->
+                            Failed "An unexpected error occurred"
+                        Ok res ->
+                          case res.explanation of
+                            Just explanation ->
+                              FailedWithExplanation err explanation
+                            _ -> 
+                              FailedWithExplanation err "Failed to load explanation"
+
+                  _ -> model.previewState
+          in
+            ( { model | previewState = previewState }
+            , Cmd.none
+            )
+
+        DismissExplanation ->
+          case model.previewState of 
+            FailedWithExplanation err _ ->
+              ( { model | previewState = Failed err }
+              , Cmd.none
+              )
+            _ ->
+              ( model
+              , Cmd.none
+              )
+
 
         ResetCurrentSession ->
             ( { model | currentLesson = { currentLesson | openFiles = openLesson lessonDescription } }
@@ -488,15 +533,40 @@ compile files =
         , expect = Http.expectJson (Compiled hash) compileResponseDecoder
         }
 
+requestExplanation : List (String, String) -> Cmd Msg
+requestExplanation files =
+    let
+        bodyString =
+            Encode.encode 0 <| payloadEncoder { files = files }
+
+        hash =
+            SHA1.toHex <| SHA1.fromString bodyString
+    in
+    Http.post
+        { url = "/explain/" ++ hash
+        , body = Http.stringBody "application/json" bodyString
+        , expect = Http.expectJson ExplanationReceived explainResponseDecoder
+        }
+
 
 type alias CompileResponse =
     { error : Maybe String }
+
+
 
 
 compileResponseDecoder : Decode.Decoder CompileResponse
 compileResponseDecoder =
     Decode.map CompileResponse
         (Decode.field "error" <| Decode.maybe Decode.string)
+
+type alias ExplainResponse =
+    { explanation : Maybe String }
+
+explainResponseDecoder : Decode.Decoder ExplainResponse
+explainResponseDecoder =
+    Decode.map ExplainResponse
+        (Decode.field "explanation" <| Decode.maybe Decode.string)
 
 
 updateEditorScroll : List OpenLessonFile -> Int -> Scroll -> List OpenLessonFile
@@ -659,7 +729,23 @@ preview _ previewState =
             iframe [ src <| "/run/" ++ hash ++ "/index.html" ] []
 
         Failed msg ->
-            pre [] [ code [] [ text msg ] ]
+          div []
+            [ button [onClick ClickedExplain] [text "explain"]
+            , pre [] [ code [] [ text msg ] ]
+            ]
+        LoadingExplanation msg ->
+          div []
+            [ button [disabled True] [text "explain"]
+            , pre [] [ code [] [ text msg ] ]
+            ]
+        FailedWithExplanation msg explanation ->
+          div []
+            [ div [class "explanation hljs"] 
+              [ PI.x Bold |> toHtml [onClick DismissExplanation]  
+              , markdown explanation 
+              ] 
+            , pre [] [ code [] [ text msg ] ]
+            ]
 
 
 lessonEditors : Model -> Maybe Int -> List OpenLessonFile -> List (Html Msg)

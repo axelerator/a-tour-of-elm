@@ -6923,10 +6923,17 @@ var $author$project$Main$Export = function (a) {
 var $author$project$Main$Failed = function (a) {
 	return {$: 'Failed', a: a};
 };
+var $author$project$Main$FailedWithExplanation = F2(
+	function (a, b) {
+		return {$: 'FailedWithExplanation', a: a, b: b};
+	});
 var $author$project$Main$Loaded = function (a) {
 	return {$: 'Loaded', a: a};
 };
 var $author$project$Main$Loading = {$: 'Loading'};
+var $author$project$Main$LoadingExplanation = function (a) {
+	return {$: 'LoadingExplanation', a: a};
+};
 var $elm$time$Time$Posix = function (a) {
 	return {$: 'Posix', a: a};
 };
@@ -8668,6 +8675,34 @@ var $elm$time$Time$Zone = F2(
 	});
 var $elm$time$Time$customZone = $elm$time$Time$Zone;
 var $elm$time$Time$now = _Time_now($elm$time$Time$millisToPosix);
+var $author$project$Main$ExplanationReceived = function (a) {
+	return {$: 'ExplanationReceived', a: a};
+};
+var $author$project$Main$ExplainResponse = function (explanation) {
+	return {explanation: explanation};
+};
+var $author$project$Main$explainResponseDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$ExplainResponse,
+	A2(
+		$elm$json$Json$Decode$field,
+		'explanation',
+		$elm$json$Json$Decode$maybe($elm$json$Json$Decode$string)));
+var $author$project$Main$requestExplanation = function (files) {
+	var bodyString = A2(
+		$elm$json$Json$Encode$encode,
+		0,
+		$author$project$Main$payloadEncoder(
+			{files: files}));
+	var hash = $TSFoster$elm_sha1$SHA1$toHex(
+		$TSFoster$elm_sha1$SHA1$fromString(bodyString));
+	return $elm$http$Http$post(
+		{
+			body: A2($elm$http$Http$stringBody, 'application/json', bodyString),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$ExplanationReceived, $author$project$Main$explainResponseDecoder),
+			url: '/explain/' + hash
+		});
+};
 var $author$project$Main$reset = _Platform_outgoingPort(
 	'reset',
 	function ($) {
@@ -9541,6 +9576,62 @@ var $author$project$Main$update = F2(
 						{previewState: $author$project$Main$Loading}),
 					$author$project$Main$compile(
 						$author$project$Main$filesForRunning(lessonFiles)));
+			case 'ClickedExplain':
+				var _v6 = model.previewState;
+				if (_v6.$ === 'Failed') {
+					var error = _v6.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								previewState: $author$project$Main$LoadingExplanation(error)
+							}),
+						$author$project$Main$requestExplanation(
+							$author$project$Main$filesForRunning(lessonFiles)));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			case 'ExplanationReceived':
+				var httpRes = msg.a;
+				var previewState = function () {
+					var _v7 = model.previewState;
+					if (_v7.$ === 'LoadingExplanation') {
+						var err = _v7.a;
+						if (httpRes.$ === 'Err') {
+							return $author$project$Main$Failed('An unexpected error occurred');
+						} else {
+							var res = httpRes.a;
+							var _v9 = res.explanation;
+							if (_v9.$ === 'Just') {
+								var explanation = _v9.a;
+								return A2($author$project$Main$FailedWithExplanation, err, explanation);
+							} else {
+								return A2($author$project$Main$FailedWithExplanation, err, 'Failed to load explanation');
+							}
+						}
+					} else {
+						return model.previewState;
+					}
+				}();
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{previewState: previewState}),
+					$elm$core$Platform$Cmd$none);
+			case 'DismissExplanation':
+				var _v10 = model.previewState;
+				if (_v10.$ === 'FailedWithExplanation') {
+					var err = _v10.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								previewState: $author$project$Main$Failed(err)
+							}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
 			case 'ResetCurrentSession':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -9600,16 +9691,16 @@ var $author$project$Main$update = F2(
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToggleTheme':
-				var _v8 = function () {
-					var _v9 = model.theme;
-					if (_v9.$ === 'ForceDark') {
+				var _v13 = function () {
+					var _v14 = model.theme;
+					if (_v14.$ === 'ForceDark') {
 						return _Utils_Tuple2($author$project$Main$ForceLight, 'light');
 					} else {
 						return _Utils_Tuple2($author$project$Main$ForceDark, 'dark');
 					}
 				}();
-				var theme = _v8.a;
-				var themeStr = _v8.b;
+				var theme = _v13.a;
+				var themeStr = _v13.b;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
@@ -9625,9 +9716,9 @@ var $author$project$Main$update = F2(
 						}),
 					contents);
 				var f = F2(
-					function (_v10, l) {
-						var pos = _v10.a;
-						var value = _v10.b;
+					function (_v15, l) {
+						var pos = _v15.a;
+						var value = _v15.b;
 						return A3($author$project$Main$updateEditor, l, pos, value);
 					});
 				var restoredEditors = A3($elm$core$List$foldr, f, lessonFiles, indexedContents);
@@ -15232,12 +15323,96 @@ var $zaboco$elm_draggable$Draggable$mouseTrigger = F2(
 				$zaboco$elm_draggable$Draggable$whenLeftMouseButtonPressed(
 					$zaboco$elm_draggable$Draggable$baseDecoder(key))));
 	});
+var $author$project$Main$ClickedExplain = {$: 'ClickedExplain'};
+var $author$project$Main$DismissExplanation = {$: 'DismissExplanation'};
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$html$Html$iframe = _VirtualDom_node('iframe');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
 		$elm$html$Html$Attributes$stringProperty,
 		'src',
 		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $phosphor_icons$phosphor_elm$Phosphor$x = function (weight) {
+	var elements = function () {
+		switch (weight.$) {
+			case 'Bold':
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z')
+							]),
+						_List_Nil)
+					]);
+			case 'Duotone':
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M216,48V208a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8H208A8,8,0,0,1,216,48Z'),
+								$elm$svg$Svg$Attributes$opacity('0.2')
+							]),
+						_List_Nil),
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z')
+							]),
+						_List_Nil)
+					]);
+			case 'Fill':
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM181.66,170.34a8,8,0,0,1-11.32,11.32L128,139.31,85.66,181.66a8,8,0,0,1-11.32-11.32L116.69,128,74.34,85.66A8,8,0,0,1,85.66,74.34L128,116.69l42.34-42.35a8,8,0,0,1,11.32,11.32L139.31,128Z')
+							]),
+						_List_Nil)
+					]);
+			case 'Light':
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M204.24,195.76a6,6,0,1,1-8.48,8.48L128,136.49,60.24,204.24a6,6,0,0,1-8.48-8.48L119.51,128,51.76,60.24a6,6,0,0,1,8.48-8.48L128,119.51l67.76-67.75a6,6,0,0,1,8.48,8.48L136.49,128Z')
+							]),
+						_List_Nil)
+					]);
+			case 'Regular':
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z')
+							]),
+						_List_Nil)
+					]);
+			default:
+				return _List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$path,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$d('M202.83,197.17a4,4,0,0,1-5.66,5.66L128,133.66,58.83,202.83a4,4,0,0,1-5.66-5.66L122.34,128,53.17,58.83a4,4,0,0,1,5.66-5.66L128,122.34l69.17-69.17a4,4,0,1,1,5.66,5.66L133.66,128Z')
+							]),
+						_List_Nil)
+					]);
+		}
+	}();
+	return $phosphor_icons$phosphor_elm$Phosphor$makeBuilder(elements);
 };
 var $author$project$Main$preview = F2(
 	function (_v0, previewState) {
@@ -15255,19 +15430,105 @@ var $author$project$Main$preview = F2(
 							$elm$html$Html$Attributes$src('/run/' + (hash + '/index.html'))
 						]),
 					_List_Nil);
-			default:
+			case 'Failed':
 				var msg = previewState.a;
 				return A2(
-					$elm$html$Html$pre,
+					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
 						[
 							A2(
-							$elm$html$Html$code,
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$ClickedExplain)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('explain')
+								])),
+							A2(
+							$elm$html$Html$pre,
 							_List_Nil,
 							_List_fromArray(
 								[
-									$elm$html$Html$text(msg)
+									A2(
+									$elm$html$Html$code,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text(msg)
+										]))
+								]))
+						]));
+			case 'LoadingExplanation':
+				var msg = previewState.a;
+				return A2(
+					$elm$html$Html$div,
+					_List_Nil,
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$disabled(true)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('explain')
+								])),
+							A2(
+							$elm$html$Html$pre,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$code,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text(msg)
+										]))
+								]))
+						]));
+			default:
+				var msg = previewState.a;
+				var explanation = previewState.b;
+				return A2(
+					$elm$html$Html$div,
+					_List_Nil,
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('explanation hljs')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									$phosphor_icons$phosphor_elm$Phosphor$toHtml,
+									_List_fromArray(
+										[
+											$elm$html$Html$Events$onClick($author$project$Main$DismissExplanation)
+										]),
+									$phosphor_icons$phosphor_elm$Phosphor$x($phosphor_icons$phosphor_elm$Phosphor$Bold)),
+									$author$project$Main$markdown(explanation)
+								])),
+							A2(
+							$elm$html$Html$pre,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$code,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text(msg)
+										]))
 								]))
 						]));
 		}
