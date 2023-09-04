@@ -9,8 +9,8 @@ import Draggable
 import Draggable.Events exposing (onDragBy, onDragStart)
 import Editor exposing (Scroll)
 import File.Download as Download
-import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, ul, p)
-import Html.Attributes exposing (class, classList, for, id, name, src, style, tabindex, title, type_, value, disabled)
+import Html exposing (Html, a, button, code, div, iframe, img, input, label, li, nav, ol, pre, span, text, ul)
+import Html.Attributes exposing (class, classList, disabled, for, id, name, src, style, tabindex, title, type_, value)
 import Html.Events exposing (onClick)
 import Html.Lazy
 import Http
@@ -159,7 +159,7 @@ type PreviewState
     | Loading
     | Loaded String
     | Failed String
-    | LoadingExplanation String 
+    | LoadingExplanation String
     | FailedWithExplanation String String
 
 
@@ -172,7 +172,7 @@ type alias OpenLessonFile =
 
 
 type alias Model =
-    { currentLesson : { currentTab: Maybe Int, openFiles : List OpenLessonFile, outline : Outline }
+    { currentLesson : { currentTab : Maybe Int, openFiles : List OpenLessonFile, outline : Outline }
     , previewState : PreviewState
     , lessonWidth : Int
     , editorsHeight : Int
@@ -200,18 +200,22 @@ init ( themeStr, hash ) =
 
         ((Chapter upcomingLesson _) as outline) =
             outlineFromHash hash
-        openFiles = openLesson upcomingLesson
+
+        openFiles =
+            openLesson upcomingLesson
+
         currentTab =
-          if List.isEmpty openFiles then
-            Nothing
-          else
-            Just 0
+            if List.isEmpty openFiles then
+                Nothing
+
+            else
+                Just 0
     in
-    ( { currentLesson = 
-        { openFiles = openFiles
-        , outline = outline 
-        , currentTab = currentTab
-        }
+    ( { currentLesson =
+            { openFiles = openFiles
+            , outline = outline
+            , currentTab = currentTab
+            }
       , previewState = NoPreview
       , lessonWidth = 100
       , editorsHeight = 100
@@ -315,11 +319,13 @@ update msg model =
             let
                 openFiles =
                     openLesson upcomingLesson
+
                 currentTab =
-                  if List.isEmpty openFiles then
-                    Nothing
-                  else
-                    Just 0
+                    if List.isEmpty openFiles then
+                        Nothing
+
+                    else
+                        Just 0
             in
             ( { model
                 | currentLesson = { openFiles = openFiles, outline = outline, currentTab = currentTab }
@@ -338,55 +344,61 @@ update msg model =
             )
 
         ClickedExplain ->
-          case model.previewState of
-            Failed error -> 
-              ( { model | previewState = LoadingExplanation error }
-              , requestExplanation <| filesForRunning lessonFiles
-              )
-            _ -> (model, Cmd.none)
-        ExplanationReceived httpRes ->
-          let
-              previewState =
-                case model.previewState of
-                  LoadingExplanation err ->
-                    case httpRes of
-                        Err _ ->
-                            Failed "An unexpected error occurred"
-                        Ok res ->
-                          case res.explanation of
-                            Just explanation ->
-                              FailedWithExplanation err explanation
-                            _ -> 
-                              FailedWithExplanation err "Failed to load explanation"
+            case model.previewState of
+                Failed error ->
+                    ( { model | previewState = LoadingExplanation error }
+                    , requestExplanation <| filesForRunning lessonFiles
+                    )
 
-                  _ -> model.previewState
-          in
+                _ ->
+                    ( model, Cmd.none )
+
+        ExplanationReceived httpRes ->
+            let
+                previewState =
+                    case model.previewState of
+                        LoadingExplanation err ->
+                            case httpRes of
+                                Err _ ->
+                                    Failed "An unexpected error occurred"
+
+                                Ok res ->
+                                    case res.explanation of
+                                        Just explanation ->
+                                            FailedWithExplanation err explanation
+
+                                        _ ->
+                                            FailedWithExplanation err "Failed to load explanation"
+
+                        _ ->
+                            model.previewState
+            in
             ( { model | previewState = previewState }
             , Cmd.none
             )
 
         DismissExplanation ->
-          case model.previewState of 
-            FailedWithExplanation err _ ->
-              ( { model | previewState = Failed err }
-              , Cmd.none
-              )
-            _ ->
-              ( model
-              , Cmd.none
-              )
+            case model.previewState of
+                FailedWithExplanation err _ ->
+                    ( { model | previewState = Failed err }
+                    , Cmd.none
+                    )
 
+                _ ->
+                    ( model
+                    , Cmd.none
+                    )
 
         ResetCurrentSession ->
             ( { model | currentLesson = { currentLesson | openFiles = openLesson lessonDescription } }
             , reset ( lessonIdStr lessonDescription.id, List.length <| lessonFiles )
             )
 
-
         SwitchActiveTab tab ->
             ( { model | currentLesson = { currentLesson | currentTab = Just tab } }
             , Cmd.none
             )
+
         Compiled hash response ->
             let
                 previewState =
@@ -533,7 +545,8 @@ compile files =
         , expect = Http.expectJson (Compiled hash) compileResponseDecoder
         }
 
-requestExplanation : List (String, String) -> Cmd Msg
+
+requestExplanation : List ( String, String ) -> Cmd Msg
 requestExplanation files =
     let
         bodyString =
@@ -553,15 +566,15 @@ type alias CompileResponse =
     { error : Maybe String }
 
 
-
-
 compileResponseDecoder : Decode.Decoder CompileResponse
 compileResponseDecoder =
     Decode.map CompileResponse
         (Decode.field "error" <| Decode.maybe Decode.string)
 
+
 type alias ExplainResponse =
     { explanation : Maybe String }
+
 
 explainResponseDecoder : Decode.Decoder ExplainResponse
 explainResponseDecoder =
@@ -623,7 +636,7 @@ view model =
     div []
         [ nav [ class "container-fluid" ]
             [ ul []
-                [ li [class "brand"]
+                [ li [ class "brand" ]
                     [ img [ class "tangram", src "/assets/images/elm-tour-logo.svg" ] []
                     , text "A tour of Elm"
                     ]
@@ -675,8 +688,8 @@ regularIcon i =
     i Regular |> toHtml []
 
 
-lessonView : Model -> Int -> Int -> { a | openFiles : List OpenLessonFile, outline : Outline, currentTab: Maybe Int } -> PreviewState -> Html Msg
-lessonView model editorsHeight lessonWidth { openFiles, outline, currentTab} previewState =
+lessonView : Model -> Int -> Int -> { a | openFiles : List OpenLessonFile, outline : Outline, currentTab : Maybe Int } -> PreviewState -> Html Msg
+lessonView model editorsHeight lessonWidth { openFiles, outline, currentTab } previewState =
     let
         (Chapter { body } _) =
             outline
@@ -729,23 +742,25 @@ preview _ previewState =
             iframe [ src <| "/run/" ++ hash ++ "/index.html" ] []
 
         Failed msg ->
-          div []
-            [ button [onClick ClickedExplain] [text "explain"]
-            , pre [] [ code [] [ text msg ] ]
-            ]
+            div []
+                [ button [ onClick ClickedExplain ] [ text "explain" ]
+                , pre [] [ code [] [ text msg ] ]
+                ]
+
         LoadingExplanation msg ->
-          div []
-            [ button [disabled True] [text "explain"]
-            , pre [] [ code [] [ text msg ] ]
-            ]
+            div []
+                [ button [ disabled True ] [ text "explain" ]
+                , pre [] [ code [] [ text msg ] ]
+                ]
+
         FailedWithExplanation msg explanation ->
-          div []
-            [ div [class "explanation hljs"] 
-              [ PI.x Bold |> toHtml [onClick DismissExplanation]  
-              , markdown explanation 
-              ] 
-            , pre [] [ code [] [ text msg ] ]
-            ]
+            div []
+                [ div [ class "explanation hljs" ]
+                    [ PI.x Bold |> toHtml [ onClick DismissExplanation ]
+                    , markdown explanation
+                    ]
+                , pre [] [ code [] [ text msg ] ]
+                ]
 
 
 lessonEditors : Model -> Maybe Int -> List OpenLessonFile -> List (Html Msg)
@@ -766,15 +781,18 @@ fileView theme currentTab pos ({ filename } as file) =
 
                 ForceLight ->
                     "GitHub"
-        active = currentTab == Just pos
+
+        active =
+            currentTab == Just pos
     in
     [ input [ class "radiotab", name "tabs", tabindex 1, type_ "radio", id tabId ] []
-    , label 
-      [ classList [("label", True),("active", active)]
-      , onClick <| SwitchActiveTab pos
-      , for tabId 
-      ] [ text filename ]
-    , div [ classList [("panel", True), ("active", active)], tabindex 1 ]
+    , label
+        [ classList [ ( "label", True ), ( "active", active ) ]
+        , onClick <| SwitchActiveTab pos
+        , for tabId
+        ]
+        [ text filename ]
+    , div [ classList [ ( "panel", True ), ( "active", active ) ], tabindex 1 ]
         [ Html.Lazy.lazy Editor.textareaStyle themeName
         , Html.Lazy.lazy Editor.syntaxThemeStyle themeName
         , Editor.viewLanguage (FromEditor << OnScroll pos) (FromEditor << SetText pos) file
