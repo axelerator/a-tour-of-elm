@@ -47,6 +47,7 @@ type LessonId
     | ElmModel
     | ElmCommands
     | ElmSubscriptions
+    | ElmPorts
 
 
 type alias Lesson =
@@ -122,6 +123,8 @@ lessonIdStr id =
         ElmCommands ->
             "ElmCommands"
 
-
         ElmSubscriptions ->
             "ElmSubscriptions"
+
+        ElmPorts ->
+            "ElmPorts"

@@ -136,6 +136,15 @@ nav .outline  li {
   margin: 0;
 }
 
+.md-content code {
+  padding: .175rem .25rem;
+}
+
+.md-content pre > code {
+  font-size: 0.8rem;
+}
+
+
 .tabs {
   display: flex;
   flex-wrap: wrap;

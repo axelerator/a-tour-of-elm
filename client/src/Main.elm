@@ -28,6 +28,7 @@ import Lessons.Elm.Intro as ElmIntro
 import Lessons.Elm.Lang as ElmLang
 import Lessons.Elm.Model as ElmModel
 import Lessons.Elm.PatternMatching as ElmPatternMatching
+import Lessons.Elm.Ports as ElmPorts
 import Lessons.Elm.Subscriptions as ElmSubscriptions
 import Lessons.Elm.TEA as ElmTEA
 import Lessons.Elm.Types as ElmTypes
@@ -112,6 +113,7 @@ outlines =
         [ Chapter ElmModel.lesson []
         , Chapter ElmCommands.lesson []
         , Chapter ElmSubscriptions.lesson []
+        , Chapter ElmPorts.lesson []
         ]
     ]
 
