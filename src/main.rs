@@ -33,6 +33,7 @@ async fn main() {
     app = app
         .route("/compile/:run", post(compile_handler))
         .route("/explain/:run", post(explain_handler))
+        .route("/half_login/:username", get(half_login_handler))
         .route("/run/:run_hash/:rest", get(handler))
         .layer(DefaultBodyLimit::max(4096));
 
@@ -375,6 +376,23 @@ main = text "Hello!"
 "#;
         fs::write(elm_boiler_plate_dir.join("src").join("Main.elm"), main).unwrap();
 
+        for pckg in vec!["elm/http", "elm/time"] {
+            let yes = Command::new("yes")
+                .stdout(Stdio::piped())
+                .spawn()
+                .expect("Failed to start yes process");
+            let yes_out = yes.stdout.expect("Failed to open echo stdout");
+
+            let _add_pckg = Command::new("elm")
+                .current_dir(&elm_boiler_plate_dir)
+                .arg("install")
+                .arg(pckg)
+                .stdin(Stdio::from(yes_out))
+                .stdout(Stdio::piped())
+                .output()
+                .expect("Failed to swapn elm init");
+        }
+
         let _make_out = Command::new("elm")
             .current_dir(&elm_boiler_plate_dir)
             .arg("make")
@@ -387,4 +405,10 @@ main = text "Hello!"
         //output.status
         // Execute `ls` in the current directory of the program.
     }
+}
+
+async fn half_login_handler(
+    axum::extract::Path(name): axum::extract::Path<String>,
+) -> String {
+    format!("Welcome {}", name)
 }

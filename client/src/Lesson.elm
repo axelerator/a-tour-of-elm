@@ -40,7 +40,12 @@ type LessonId
     | ElmIntroId
     | ElmLang
     | ElmTEA
+    | ElmLoginFrom
     | ElmPatternMatching
+    | ElmFirstSteps
+    | ElmModel
+    | ElmCommands
+    | ElmSubscriptions
 
 
 type alias Lesson =
@@ -95,8 +100,24 @@ lessonIdStr id =
         ElmLang ->
             "ElmLang"
 
+        ElmLoginFrom ->
+            "ElmLoginFrom"
+
         ElmTEA ->
             "ElmTEA"
 
         ElmPatternMatching ->
             "ElmPatternMatching"
+
+        ElmFirstSteps ->
+            "ElmFirstSteps"
+
+        ElmModel ->
+            "ElmModel"
+
+        ElmCommands ->
+            "ElmCommands"
+
+
+        ElmSubscriptions ->
+            "ElmSubscriptions"

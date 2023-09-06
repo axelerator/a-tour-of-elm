@@ -26,6 +26,10 @@ import Lessons.Elm.Intro as ElmIntro
 import Lessons.Elm.Lang as ElmLang
 import Lessons.Elm.PatternMatching as ElmPatternMatching
 import Lessons.Elm.TEA as ElmTEA
+import Lessons.Elm.FirstSteps as ElmFirstSteps
+import Lessons.Elm.Model as ElmModel
+import Lessons.Elm.Commands as ElmCommands
+import Lessons.Elm.Subscriptions as ElmSubscriptions
 import Lessons.Elm.Types as ElmTypes
 import Lessons.HtmlAttributes as HtmlAttributes
 import Lessons.HtmlIntro as HtmlIntro
@@ -101,6 +105,11 @@ outlines =
         , Chapter ElmPatternMatching.lesson []
         , Chapter ElmCustomTypes.lesson []
         , Chapter ElmTEA.lesson []
+        ]
+    , Chapter ElmFirstSteps.lesson
+        [ Chapter ElmModel.lesson []
+        , Chapter ElmCommands.lesson []
+        , Chapter ElmSubscriptions.lesson []
         ]
     ]
 
@@ -464,11 +473,11 @@ update msg model =
                     )
 
                 OnScroll pos scroll ->
-                    let
-                        updatedFiles =
-                            updateEditorScroll lessonFiles pos scroll
-                    in
-                    ( { model | currentLesson = { currentLesson | openFiles = updatedFiles } }
+                    ( { model 
+                      | currentLesson = { currentLesson 
+                                        | openFiles = updateEditorScroll lessonFiles pos scroll 
+                                        } 
+                      }
                     , Cmd.none
                     )
 
@@ -638,16 +647,16 @@ view model =
             [ ul []
                 [ li [ class "brand" ]
                     [ img [ class "tangram", src "/assets/images/elm-tour-logo.svg" ] []
-                    , text "A tour of Elm"
+                    , span [] [text "A tour of Elm"]
                     ]
                 ]
             , ul []
                 [ li []
-                    [ a [ onClick ToggleOutline ] [ PI.list Bold |> toHtml [] ]
+                    [ a [ onClick ToggleOutline, title "Toggle lesson index" ] [ PI.list Bold |> toHtml [] ]
                     , ul [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
                         List.map outlineView outlines
                     ]
-                , li [ onClick ToggleTheme ]
+                , li [ onClick ToggleTheme, title "Toggle dark/light mode" ]
                     [ themeIcon model.theme Regular |> toHtml []
                     ]
                 ]
