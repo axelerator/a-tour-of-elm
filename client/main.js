@@ -6046,6 +6046,8 @@ var $author$project$Lesson$lessonIdStr = function (id) {
 			return 'HtmlUrlAndImagesId';
 		case 'WelcomeId':
 			return 'WelcomeId';
+		case 'SPAId':
+			return 'SPAId';
 		case 'HtmlId':
 			return 'HtmlId';
 		case 'CSSId':
@@ -6437,6 +6439,8 @@ var $author$project$Lessons$HtmlIntro$lessonDescription = {
 		[$author$project$Lessons$HtmlIntro$indexHtml]),
 	title: 'Tags & Elements'
 };
+var $author$project$Lesson$SPAId = {$: 'SPAId'};
+var $author$project$Chapters$spa = {body: '\n', id: $author$project$Lesson$SPAId, lessonFiles: _List_Nil, title: 'Single Page Applications'};
 var $author$project$Lesson$WelcomeId = {$: 'WelcomeId'};
 var $author$project$Chapters$welcome = {body: '# Hi there 👋\n\nGet ready to embark on an exciting journey from zero to creating your own \ninteractive single-page web application using Elm.\nThis tutorial is your gateway to the world of programming,\nand guess what? No prior experience required!\n\nWeb apps get delivered to the user through the _browser_ utilizing multiple technologies.\nMost importantly `Html`, `JavaScript` and `CSS` which is why we cover the basics of those here too.\n\nThere are already tons of excellent tutorials out there to learn these in depth. And developers spend\nyears on mastering _each_ of those! 🥵\n\nThe chapters in this tour aim to provide you ramp you up as quickly as possible, focussing only on what\'s\nabsolutely necesseray to be able to put your Elm code into action.\n\nEach lesson comes with code examples and a little exercise that you can run in your browser, no software installation needed.\n\nIf you\'re already familiar with them feel free to skip directly to the Elm chapter. 🚀\n', id: $author$project$Lesson$WelcomeId, lessonFiles: _List_Nil, title: 'Welcome'};
 var $author$project$Main$welcome = A2($author$project$Main$Chapter, $author$project$Chapters$welcome, _List_Nil);
@@ -6445,29 +6449,35 @@ var $author$project$Main$outlines = _List_fromArray(
 		$author$project$Main$welcome,
 		A2(
 		$author$project$Main$Chapter,
-		$author$project$Chapters$html,
+		$author$project$Chapters$spa,
 		_List_fromArray(
 			[
-				A2($author$project$Main$Chapter, $author$project$Lessons$HtmlIntro$lessonDescription, _List_Nil),
-				A2($author$project$Main$Chapter, $author$project$Lessons$HtmlAttributes$lesson, _List_Nil),
-				A2($author$project$Main$Chapter, $author$project$Lessons$HtmlUrlAndImages$lesson, _List_Nil)
-			])),
-		A2(
-		$author$project$Main$Chapter,
-		$author$project$Chapters$css,
-		_List_fromArray(
-			[
-				A2($author$project$Main$Chapter, $author$project$Lessons$CSSIntro$lessonDescription, _List_Nil),
-				A2($author$project$Main$Chapter, $author$project$Lessons$CSSRules$lesson, _List_Nil),
-				A2($author$project$Main$Chapter, $author$project$Lessons$CSSInclude$lesson, _List_Nil)
-			])),
-		A2(
-		$author$project$Main$Chapter,
-		$author$project$Chapters$js,
-		_List_fromArray(
-			[
-				A2($author$project$Main$Chapter, $author$project$Lessons$JSIntro$lesson, _List_Nil),
-				A2($author$project$Main$Chapter, $author$project$Lessons$JSFunctions$lesson, _List_Nil)
+				A2(
+				$author$project$Main$Chapter,
+				$author$project$Chapters$html,
+				_List_fromArray(
+					[
+						A2($author$project$Main$Chapter, $author$project$Lessons$HtmlIntro$lessonDescription, _List_Nil),
+						A2($author$project$Main$Chapter, $author$project$Lessons$HtmlAttributes$lesson, _List_Nil),
+						A2($author$project$Main$Chapter, $author$project$Lessons$HtmlUrlAndImages$lesson, _List_Nil)
+					])),
+				A2(
+				$author$project$Main$Chapter,
+				$author$project$Chapters$css,
+				_List_fromArray(
+					[
+						A2($author$project$Main$Chapter, $author$project$Lessons$CSSIntro$lessonDescription, _List_Nil),
+						A2($author$project$Main$Chapter, $author$project$Lessons$CSSRules$lesson, _List_Nil),
+						A2($author$project$Main$Chapter, $author$project$Lessons$CSSInclude$lesson, _List_Nil)
+					])),
+				A2(
+				$author$project$Main$Chapter,
+				$author$project$Chapters$js,
+				_List_fromArray(
+					[
+						A2($author$project$Main$Chapter, $author$project$Lessons$JSIntro$lesson, _List_Nil),
+						A2($author$project$Main$Chapter, $author$project$Lessons$JSFunctions$lesson, _List_Nil)
+					]))
 			])),
 		A2(
 		$author$project$Main$Chapter,
@@ -9843,6 +9853,9 @@ var $author$project$Main$update = F2(
 		}
 	});
 var $phosphor_icons$phosphor_elm$Phosphor$Bold = {$: 'Bold'};
+var $author$project$Main$GotoLesson = function (a) {
+	return {$: 'GotoLesson', a: a};
+};
 var $phosphor_icons$phosphor_elm$Phosphor$Regular = {$: 'Regular'};
 var $author$project$Main$ToggleOutline = {$: 'ToggleOutline'};
 var $author$project$Main$ToggleTheme = {$: 'ToggleTheme'};
@@ -9881,6 +9894,27 @@ var $elm$html$Html$Attributes$classList = function (classes) {
 				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
 };
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$core$List$drop = F2(
+	function (n, list) {
+		drop:
+		while (true) {
+			if (n <= 0) {
+				return list;
+			} else {
+				if (!list.b) {
+					return list;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs;
+					n = $temp$n;
+					list = $temp$list;
+					continue drop;
+				}
+			}
+		}
+	});
 var $elm$html$Html$img = _VirtualDom_node('img');
 var $author$project$Main$HorizontalSplit = {$: 'HorizontalSplit'};
 var $author$project$Main$RunCurrentLesson = {$: 'RunCurrentLesson'};
@@ -10190,30 +10224,6 @@ var $author$project$Main$actionsView = function (openFiles) {
 			]));
 };
 var $elm$html$Html$button = _VirtualDom_node('button');
-var $author$project$Main$GotoLesson = function (a) {
-	return {$: 'GotoLesson', a: a};
-};
-var $elm$core$List$drop = F2(
-	function (n, list) {
-		drop:
-		while (true) {
-			if (n <= 0) {
-				return list;
-			} else {
-				if (!list.b) {
-					return list;
-				} else {
-					var x = list.a;
-					var xs = list.b;
-					var $temp$n = n - 1,
-						$temp$list = xs;
-					n = $temp$n;
-					list = $temp$list;
-					continue drop;
-				}
-			}
-		}
-	});
 var $author$project$Main$dropWhile = F2(
 	function (predicate, list) {
 		dropWhile:
@@ -16020,7 +16030,9 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$li,
 								_List_fromArray(
 									[
-										$elm$html$Html$Attributes$class('brand')
+										$elm$html$Html$Attributes$class('brand'),
+										$elm$html$Html$Events$onClick(
+										$author$project$Main$GotoLesson($author$project$Main$welcome))
 									]),
 								_List_fromArray(
 									[
@@ -16076,7 +16088,10 @@ var $author$project$Main$view = function (model) {
 														_Utils_Tuple2('visible', model.showOutline)
 													]))
 											]),
-										A2($elm$core$List$map, $author$project$Main$outlineView, $author$project$Main$outlines))
+										A2(
+											$elm$core$List$map,
+											$author$project$Main$outlineView,
+											A2($elm$core$List$drop, 1, $author$project$Main$outlines)))
 									])),
 								A2(
 								$elm$html$Html$li,

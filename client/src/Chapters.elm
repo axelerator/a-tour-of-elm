@@ -60,6 +60,15 @@ so the browser is able to display it.
     , lessonFiles = []
     }
 
+spa : LessonDescription
+spa =
+    { id = SPAId
+    , title = "Single Page Applications"
+    , body = """
+"""
+    , lessonFiles = []
+    }
+
 
 css : LessonDescription
 css =

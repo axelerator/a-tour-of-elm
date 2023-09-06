@@ -26,6 +26,7 @@ type alias LessonFile =
 type LessonId
     = WelcomeId
     | HtmlId
+    | SPAId
     | HtmlIntroId
     | HtmlAttributesId
     | HtmlUrlAndImagesId
@@ -84,6 +85,9 @@ lessonIdStr id =
 
         WelcomeId ->
             "WelcomeId"
+
+        SPAId ->
+            "SPAId"
 
         HtmlId ->
             "HtmlId"

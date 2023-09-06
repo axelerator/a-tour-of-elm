@@ -20,16 +20,16 @@ import Lesson exposing (FileType(..), LessonDescription, LessonId(..), lessonIdS
 import Lessons.CSSInclude as CSSInclude
 import Lessons.CSSIntro as CSSIntro exposing (lessonDescription)
 import Lessons.CSSRules as CSSRules
+import Lessons.Elm.Commands as ElmCommands
 import Lessons.Elm.CustomTypes as ElmCustomTypes
+import Lessons.Elm.FirstSteps as ElmFirstSteps
 import Lessons.Elm.HelloWorld as ElmHelloWorld
 import Lessons.Elm.Intro as ElmIntro
 import Lessons.Elm.Lang as ElmLang
-import Lessons.Elm.PatternMatching as ElmPatternMatching
-import Lessons.Elm.TEA as ElmTEA
-import Lessons.Elm.FirstSteps as ElmFirstSteps
 import Lessons.Elm.Model as ElmModel
-import Lessons.Elm.Commands as ElmCommands
+import Lessons.Elm.PatternMatching as ElmPatternMatching
 import Lessons.Elm.Subscriptions as ElmSubscriptions
+import Lessons.Elm.TEA as ElmTEA
 import Lessons.Elm.Types as ElmTypes
 import Lessons.HtmlAttributes as HtmlAttributes
 import Lessons.HtmlIntro as HtmlIntro
@@ -84,19 +84,21 @@ welcome =
 outlines : List Outline
 outlines =
     [ welcome
-    , Chapter Chapters.html
-        [ Chapter HtmlIntro.lessonDescription []
-        , Chapter HtmlAttributes.lesson []
-        , Chapter HtmlUrlAndImages.lesson []
-        ]
-    , Chapter Chapters.css
-        [ Chapter CSSIntro.lessonDescription []
-        , Chapter CSSRules.lesson []
-        , Chapter CSSInclude.lesson []
-        ]
-    , Chapter Chapters.js
-        [ Chapter JSIntro.lesson []
-        , Chapter JSFunctions.lesson []
+    , Chapter Chapters.spa
+        [ Chapter Chapters.html
+            [ Chapter HtmlIntro.lessonDescription []
+            , Chapter HtmlAttributes.lesson []
+            , Chapter HtmlUrlAndImages.lesson []
+            ]
+        , Chapter Chapters.css
+            [ Chapter CSSIntro.lessonDescription []
+            , Chapter CSSRules.lesson []
+            , Chapter CSSInclude.lesson []
+            ]
+        , Chapter Chapters.js
+            [ Chapter JSIntro.lesson []
+            , Chapter JSFunctions.lesson []
+            ]
         ]
     , Chapter ElmIntro.lesson
         [ Chapter ElmHelloWorld.lesson []
@@ -473,10 +475,11 @@ update msg model =
                     )
 
                 OnScroll pos scroll ->
-                    ( { model 
-                      | currentLesson = { currentLesson 
-                                        | openFiles = updateEditorScroll lessonFiles pos scroll 
-                                        } 
+                    ( { model
+                        | currentLesson =
+                            { currentLesson
+                                | openFiles = updateEditorScroll lessonFiles pos scroll
+                            }
                       }
                     , Cmd.none
                     )
@@ -645,16 +648,17 @@ view model =
     div []
         [ nav [ class "container-fluid" ]
             [ ul []
-                [ li [ class "brand" ]
+                [ li [ class "brand", onClick <| GotoLesson welcome ]
                     [ img [ class "tangram", src "/assets/images/elm-tour-logo.svg" ] []
-                    , span [] [text "A tour of Elm"]
+                    , span [] [ text "A tour of Elm" ]
                     ]
                 ]
             , ul []
                 [ li []
                     [ a [ onClick ToggleOutline, title "Toggle lesson index" ] [ PI.list Bold |> toHtml [] ]
                     , ul [ classList [ ( "outline", True ), ( "visible", model.showOutline ) ] ] <|
-                        List.map outlineView outlines
+                        List.map outlineView <|
+                            List.drop 1 outlines
                     ]
                 , li [ onClick ToggleTheme, title "Toggle dark/light mode" ]
                     [ themeIcon model.theme Regular |> toHtml []
