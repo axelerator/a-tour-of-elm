@@ -22,10 +22,18 @@ use openai::{
     set_key,
 };
 
+#[derive(Serialize, Deserialize)]
+struct Secrets {
+    openai: String
+}
+
 #[tokio::main]
 async fn main() {
     clear_cache();
     let serve_dir = ServeDir::new("www/assets").not_found_service(ServeFile::new("www/index.html"));
+    let secrets : Secrets = etoml::decrypt_default().unwrap();
+
+    set_key(secrets.openai);
 
     let mut app = Router::new()
         .nest_service("/", ServeFile::new("www/index.html"))
@@ -215,9 +223,7 @@ async fn explain_handler(
     let mut error = None;
     let mut files = vec![];
     if run_dir.exists() {
-        println!("Expl: {:?}", stored_explanation);
         if stored_explanation.exists() {
-            println!("Returning cached explanation");
             let stored_explanation = fs::read_to_string(stored_explanation).unwrap();
 
             return Json(ExplainResponse {
@@ -254,10 +260,6 @@ async fn explain_handler(
                 format!("Here {fp} of the current lesson.\n{file_listings}\n I got the following errors:\n```{error_text}```\n. Please explain in simple terms what's the problem, but don't include the complete listing of the fixed code in your answer.");
         
 
-            // Make sure you have a file named `.env` with the `OPENAI_KEY` environment variable defined!
-            //dotenv().unwrap();
-            set_key("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".to_string());
-
             let setup_msg = ChatCompletionMessage {
                 role: ChatCompletionMessageRole::System,
                 content: Some(OPENAI_CONTENT.to_string()),
@@ -277,9 +279,6 @@ async fn explain_handler(
                 .create()
                 .await
                 .unwrap();
-            for choice in chat_completion.choices.iter() {
-                println!("Usage: {}: {:?}", choice.index, choice.finish_reason);
-            }
             let returned_message = chat_completion.choices.first().unwrap().message.clone();
 
             let explanation = returned_message.content.clone().unwrap();
