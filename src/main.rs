@@ -382,8 +382,9 @@ main = text "Hello!"
                 .expect("Failed to start yes process");
             let yes_out = yes.stdout.expect("Failed to open echo stdout");
 
-            let _add_pckg = Command::new("elm")
+            let _add_pckg = Command::new("npx")
                 .current_dir(&elm_boiler_plate_dir)
+                .arg("elm")
                 .arg("install")
                 .arg(pckg)
                 .stdin(Stdio::from(yes_out))
@@ -392,8 +393,9 @@ main = text "Hello!"
                 .expect("Failed to swapn elm init");
         }
 
-        let _make_out = Command::new("elm")
+        let _make_out = Command::new("npx")
             .current_dir(&elm_boiler_plate_dir)
+            .arg("elm")
             .arg("make")
             .arg("src/Main.elm")
             .arg("--output=main.js")
