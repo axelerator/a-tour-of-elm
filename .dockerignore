@@ -1,0 +1,7 @@
+/target
+client/elm-stuff
+tmp
+.DS_Store
+/node_modules
+Dockerfile
+compose.yaml

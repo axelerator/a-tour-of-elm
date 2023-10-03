@@ -1,0 +1,16 @@
+services:
+  a-tour-of-elm:
+    image: a-tour-of-elm:v1
+    labels:
+      # - "traefik.http.routers.whoami.rule=Host(`whoami.containers.local`)"
+      #- "traefik.http.routers.whoami.rule=Path(`/whoami`)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`a-tour-of-elm.axelerator.de`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /opt/etoml:/opt/etoml
+
+
+
