@@ -6412,7 +6412,7 @@ var $author$project$Lessons$JSFunctions$body = '# Functions and external scripts
 var $author$project$Lesson$JSFile = {$: 'JSFile'};
 var $author$project$Lessons$JSFunctions$js = 'let acidify = (something) => something + " vinegar"\nlet fruit = "melon"\n';
 var $author$project$Lessons$JSFunctions$functionsJs = {content: $author$project$Lessons$JSFunctions$js, filename: 'my-functions.js', filetype: $author$project$Lesson$JSFile};
-var $author$project$Lessons$JSFunctions$html = '<html lang="en">\n  <head> \n    <title>With external JS</title>\n    <script src="my-functions.js"></script>\n    <script>\n      alert(acidify("apple cider"))\n      alert(acidify("white wine"))\n    </script>\n  </head>\n</html>';
+var $author$project$Lessons$JSFunctions$html = '<html lang="en">\n  <head> \n    <title>With external JS</title>\n    <script src="my-functions.js"></script>\n    <script>\n      alert(acidify("apple cider"))\n      alert(acidify("white wine"))\n    </script>\n  </head>\n  <body></body>\n</html>';
 var $author$project$Lessons$JSFunctions$indexHtml = {content: $author$project$Lessons$JSFunctions$html, filename: 'index.html', filetype: $author$project$Lesson$HtmlFile};
 var $author$project$Lessons$JSFunctions$lesson = {
 	body: $author$project$Lessons$JSFunctions$body,

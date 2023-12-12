@@ -30,6 +30,7 @@ COPY --from=cargo-build /build/service /app/service
 COPY --from=cargo-build /build/secrets.etoml /app/secrets.etoml
 COPY --from=cargo-build /build/www /app/www
 COPY --from=cargo-build /build/node_modules /app/node_modules
+COPY --from=cargo-build /build/.htmlvalidate.json /app/
 
 WORKDIR /app
 

@@ -66,5 +66,6 @@ html =
       alert(acidify("white wine"))
     </script>
   </head>
+  <body></body>
 </html>"""
 
