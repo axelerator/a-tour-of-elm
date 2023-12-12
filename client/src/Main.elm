@@ -758,8 +758,8 @@ preview _ previewState =
 
         Failed msg ->
             div []
-                [ button [ onClick ClickedExplain ] [ text "explain" ]
-                , pre [] [ code [] [ text msg ] ]
+                -- [ button [ onClick ClickedExplain ] [ text "explain" ]
+                [ pre [] [ code [] [ text msg ] ]
                 ]
 
         LoadingExplanation msg ->
